@@ -29,6 +29,30 @@ router.get('/', oauth.authorise(), (req, res, next) => {
   });
 });
 
+router.get('/:usermId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id = req.params.usermId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    // SQL Query > Select Data
+    const query = client.query('SELECT * FROM user_master where um_id=$1',[id]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
 router.post('/add', oauth.authorise(), (req, res, next) => {
   const results = [];
   pool.connect(function(err, client, done){
@@ -43,6 +67,57 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
     client.query(singleInsert, params, function (error, result) {
         results.push(result.rows[0]); // Will contain your inserted rows
         done();
+        return res.json(results);
+    });
+
+    done(err);
+  });
+});
+
+router.post('/edit/:usermId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id = req.params.usermId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    client.query('BEGIN;');
+    
+    var singleInsert = 'update user_master set um_username=$1, um_password=$2, um_confirm_password=$3, um_assign_role=$4, um_emp_id=$5, um_updated_at=now() where um_id=$6 RETURNING *',
+        params = [req.body.um_username,req.body.um_password,req.body.um_confirm_password,req.body.um_assign_role,req.body.um_emp_id.emp_id,id];
+    client.query(singleInsert, params, function (error, result) {
+        results.push(result.rows[0]); // Will contain your inserted rows
+        
+        client.query('COMMIT;');
+        done();
+        return res.json(results);
+    });
+
+    done(err);
+  });
+});
+
+router.post('/delete/:usermId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id = req.params.usermId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    client.query('BEGIN;');
+
+    var singleInsert = 'update user_master set um_status=1, um_updated_at=now() where um_id=$1 RETURNING *',
+        params = [id]
+    client.query(singleInsert, params, function (error, result) {
+        results.push(result.rows[0]); // Will contain your inserted rows
+        done();
+        client.query('COMMIT;');
         return res.json(results);
     });
 
@@ -97,6 +172,7 @@ router.post('/user/limit', oauth.authorise(), (req, res, next) => {
     const strqry =  "SELECT * "+
                     "FROM user_master um "+
                     "inner join employee_master emp on um.um_emp_id=emp.emp_id "+
+                    "left outer join role_master rm on um.um_id=rm.rm_um_id "+
                     "where um.um_status = 0 "+
                     "and emp.emp_status = 'active' "+
                     "and LOWER(um_username||''||um_password||''||um_confirm_password||''||um_assign_role||''||um_emp_id) LIKE LOWER($1) "+

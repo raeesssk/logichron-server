@@ -16,7 +16,7 @@ router.get('/', oauth.authorise(), (req, res, next) => {
       console.log("the error is"+err);
       return res.status(500).json({success: false, data: err});
     }
-    const query = client.query("SELECT * FROM employee_master where emp_status='active' order by emp_id desc");
+    const query = client.query("SELECT * FROM job_master order by dm_id desc");
     query.on('row', (row) => {
       results.push(row);
     });
@@ -29,9 +29,9 @@ router.get('/', oauth.authorise(), (req, res, next) => {
   });
 });
 
-router.get('/:employeeId', oauth.authorise(), (req, res, next) => {
+router.get('/:jobId', oauth.authorise(), (req, res, next) => {
   const results = [];
-  const id = req.params.employeeId;
+  const id = req.params.jobId;
   pool.connect(function(err, client, done){
     if(err) {
       done();
@@ -39,8 +39,7 @@ router.get('/:employeeId', oauth.authorise(), (req, res, next) => {
       console.log("the error is"+err);
       return res.status(500).json({success: false, data: err});
     }
-    // SQL Query > Select Data
-    const query = client.query('SELECT * FROM employee_master where emp_id=$1',[id]);
+    const query = client.query("SELECT * FROM job_master where dm_id=$1",[id]);
     query.on('row', (row) => {
       results.push(row);
     });
@@ -55,8 +54,6 @@ router.get('/:employeeId', oauth.authorise(), (req, res, next) => {
 
 router.post('/add', oauth.authorise(), (req, res, next) => {
   const results = [];
-  const employee=req.body.employee;
-  const image=req.body.image;
   pool.connect(function(err, client, done){
     if(err) {
       done();
@@ -65,8 +62,8 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
       return res.status(500).json({success: false, data: err});
     }
 
-    var singleInsert = "INSERT INTO employee_master(emp_name, emp_mobile, emp_address, emp_correspondence_address, emp_aadhar_no, emp_pancard_no, emp_designation, emp_emp_no, emp_email_id, emp_qualification, emp_image, emp_status) values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'active') RETURNING *",
-        params = [employee.emp_name,employee.emp_mobile,employee.emp_address,employee.emp_correspondence_address,employee.emp_aadhar_no,employee.emp_pancard_no,employee.emp_designation,employee.emp_emp_no,employee.emp_email_id,employee.emp_qualification,image.emp_image]
+    var singleInsert = "INSERT INTO job_master(dm_first_name, dm_last_name, dm_job_title, dm_job_level, dm_dept, dm_email_id, dm_mobile, dm_company_name, dm_address, dm_city, dm_state, dm_postal_code, dm_country, dm_industry, dm_company_size, dm_revenue, dm_asset, dm_domain, dm_status) values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,'pending') RETURNING *",
+        params = [req.body.dm_first_name,req.body.dm_last_name,req.body.dm_job_title,req.body.dm_job_level,req.body.dm_dept,req.body.dm_email_id,req.body.dm_mobile,req.body.dm_company_name,req.body.dm_address,req.body.dm_city,req.body.dm_state,req.body.dm_postal_code,req.body.dm_country,req.body.dm_industry,req.body.dm_company_size,req.body.dm_revenue,req.body.dm_asset,req.body.dm_domain]
     client.query(singleInsert, params, function (error, result) {
         results.push(result.rows[0]); // Will contain your inserted rows
         done();
@@ -77,9 +74,9 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
   });
 });
 
-router.post('/edit/:employeeId', oauth.authorise(), (req, res, next) => {
+router.post('/edit/:jobId', oauth.authorise(), (req, res, next) => {
   const results = [];
-  const id = req.params.employeeId;
+  const id = req.params.jobId;
   pool.connect(function(err, client, done){
     if(err) {
       done();
@@ -89,8 +86,8 @@ router.post('/edit/:employeeId', oauth.authorise(), (req, res, next) => {
     }
     client.query('BEGIN;');
     
-    var singleInsert = 'update employee_master set emp_name=$1, emp_mobile=$2, emp_address=$3, emp_correspondence_address=$4, emp_aadhar_no=$5, emp_pancard_no=$6, emp_designation=$7, emp_emp_no=$8, emp_email_id=$9, emp_qualification=$10, emp_updated_at=now() where emp_id=$11 RETURNING *',
-        params = [req.body.emp_name,req.body.emp_mobile,req.body.emp_address,req.body.emp_correspondence_address,req.body.emp_aadhar_no,req.body.emp_pancard_no,req.body.emp_designation,req.body.emp_emp_no,req.body.emp_email_id,req.body.emp_qualification,id];
+    var singleInsert = 'update job_master set dm_first_name=$1, dm_last_name=$2, dm_job_title=$3, dm_job_level=$4, dm_dept=$5, dm_email_id=$6, dm_mobile=$7, dm_company_name=$8, dm_address=$9, dm_city=$10, dm_state=$11, dm_postal_code=$12, dm_country=$13, dm_industry=$14, dm_company_size=$15, dm_revenue=$16, dm_asset=$17, dm_domain=$18, dm_updated_at=now() where dm_id=$19 RETURNING *',
+        params = [req.body.dm_first_name,req.body.dm_last_name,req.body.dm_job_title,req.body.dm_job_level,req.body.dm_dept,req.body.dm_email_id,req.body.dm_mobile,req.body.dm_company_name,req.body.dm_address,req.body.dm_city,req.body.dm_state,req.body.dm_postal_code,req.body.dm_country,req.body.dm_industry,req.body.dm_company_size,req.body.dm_revenue,req.body.dm_asset,req.body.dm_domain,id];
     client.query(singleInsert, params, function (error, result) {
         results.push(result.rows[0]); // Will contain your inserted rows
         
@@ -103,9 +100,9 @@ router.post('/edit/:employeeId', oauth.authorise(), (req, res, next) => {
   });
 });
 
-router.post('/delete/:employeeId', oauth.authorise(), (req, res, next) => {
+router.post('/delete/:jobId', oauth.authorise(), (req, res, next) => {
   const results = [];
-  const id = req.params.employeeId;
+  const id = req.params.jobId;
   pool.connect(function(err, client, done){
     if(err) {
       done();
@@ -115,7 +112,7 @@ router.post('/delete/:employeeId', oauth.authorise(), (req, res, next) => {
     }
     client.query('BEGIN;');
 
-    var singleInsert = "update employee_master set emp_status='inactive', emp_updated_at=now() where emp_id=$1 RETURNING *",
+    var singleInsert = "update job_master set dm_status='incorrect', dm_updated_at=now() where dm_id=$1 RETURNING *",
         params = [id]
     client.query(singleInsert, params, function (error, result) {
         results.push(result.rows[0]); // Will contain your inserted rows
@@ -128,7 +125,7 @@ router.post('/delete/:employeeId', oauth.authorise(), (req, res, next) => {
   });
 });
 
-router.post('/employee/total', oauth.authorise(), (req, res, next) => {
+router.post('/job/total', oauth.authorise(), (req, res, next) => {
   const results = [];
   pool.connect(function(err, client, done){
     if(err) {
@@ -140,10 +137,10 @@ router.post('/employee/total', oauth.authorise(), (req, res, next) => {
     const str = "%"+req.body.search+"%";
 
     console.log(str);
-    const strqry =  "SELECT count(emp_id) as total "+
-                    "from employee_master "+
-                    "where emp_status='active' "+
-                    "and LOWER(emp_name||''||emp_mobile||''||emp_address||''||emp_correspondence_address||''||emp_aadhar_no) LIKE LOWER($1);";
+    const strqry =  "SELECT count(dm_id) as total "+
+                    "from job_master "+
+                    "where dm_status='pending' "+
+                    "and LOWER(dm_first_name||''||dm_last_name||''||dm_job_title||''||dm_job_level||''||dm_dept) LIKE LOWER($1);";
 
     const query = client.query(strqry,[str]);
     query.on('row', (row) => {
@@ -158,7 +155,7 @@ router.post('/employee/total', oauth.authorise(), (req, res, next) => {
   });
 });
 
-router.post('/employee/limit', oauth.authorise(), (req, res, next) => {
+router.post('/job/limit', oauth.authorise(), (req, res, next) => {
   const results = [];
   pool.connect(function(err, client, done){
     if(err) {
@@ -171,10 +168,10 @@ router.post('/employee/limit', oauth.authorise(), (req, res, next) => {
     // SQL Query > Select Data
 
     const strqry =  "SELECT * "+
-                    "FROM employee_master emp "+
-                    "where emp.emp_status = 'active' "+
-                    "and LOWER(emp_name||''||emp_mobile||''||emp_address||''||emp_correspondence_address||''||emp_aadhar_no) LIKE LOWER($1) "+
-                    "order by emp.emp_id desc LIMIT $2 OFFSET $3";
+                    "FROM job_master dm "+
+                    "where dm.dm_status = 'pending' "+
+                    "and LOWER(dm_first_name||''||dm_last_name||''||dm_job_title||''||dm_job_level||''||dm_dept) LIKE LOWER($1) "+
+                    "order by dm.dm_id desc LIMIT $2 OFFSET $3";
 
     const query = client.query(strqry,[ str, req.body.number, req.body.begin]);
     query.on('row', (row) => {
@@ -189,34 +186,4 @@ router.post('/employee/limit', oauth.authorise(), (req, res, next) => {
   });
 });
 
-router.post('/typeahead/search', oauth.authorise(), (req, res, next) => {
-  const results = [];
-  pool.connect(function(err, client, done){
-    if(err) {
-      done();
-      // pg.end();
-      console.log("the error is"+err);
-      return res.status(500).json({success: false, data: err});
-    }
-    const str = "%"+req.body.search+"%";
-    // SQL Query > Select Data
-
-    const strqry =  "SELECT * "+
-                    "FROM employee_master emp "+
-                    "where emp.emp_status = 'active' "+
-                    "and LOWER(emp_name||' '||emp_mobile) LIKE LOWER($1) "+
-                    "order by emp.emp_id desc LIMIT 10";
-
-    const query = client.query(strqry,[str]);
-    query.on('row', (row) => {
-      results.push(row);
-    });
-    query.on('end', () => {
-      done();
-      // pg.end();
-      return res.json(results);
-    });
-    done(err);
-  });
-});
 module.exports = router;

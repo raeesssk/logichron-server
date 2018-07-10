@@ -24,9 +24,9 @@ var sms = require('./routes/sms');
 var emailsent = require('./routes/emailsent');
 var backup = require('./routes/backup');
 var employee = require('./routes/employee');
-var user_m = require('./routes/user_m');
+var userm = require('./routes/userm');
 var role = require('./routes/role');
-var dataentry = require('./routes/dataentry');
+var job = require('./routes/job');
 var manager = require('./routes/manager');
 
 
@@ -70,9 +70,9 @@ app.use('/emailsent', emailsent);
 app.use('/backup', backup);
 app.use('/user', user);
 app.use('/employee', employee);
-app.use('/user_m', user_m);
+app.use('/userm', userm);
 app.use('/role', role);
-app.use('/dataentry', dataentry);
+app.use('/job', job);
 app.use('/manager', manager);
 
 // catch 404 and forward to error handler
