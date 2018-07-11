@@ -40,7 +40,7 @@ router.get('/:usermId', oauth.authorise(), (req, res, next) => {
       return res.status(500).json({success: false, data: err});
     }
     // SQL Query > Select Data
-    const query = client.query('SELECT * FROM user_master where um_id=$1',[id]);
+    const query = client.query('SELECT * FROM user_master um inner join users u on um.um_users_id=u.id left outer join role_master rm on um.um_rm_id=rm.rm_id left outer join employee_master em on um.um_emp_id=em.emp_id where um_id=$1',[id]);
     query.on('row', (row) => {
       results.push(row);
     });
@@ -55,6 +55,7 @@ router.get('/:usermId', oauth.authorise(), (req, res, next) => {
 
 router.post('/add', oauth.authorise(), (req, res, next) => {
   const results = [];
+  console.log(req.body);
   pool.connect(function(err, client, done){
     if(err) {
       done();
@@ -62,11 +63,12 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
       console.log("the error is"+err);
       return res.status(500).json({success: false, data: err});
     }
-    var singleInsert = "INSERT INTO user_master(um_username, um_password, um_confirm_password, um_assign_role, um_emp_id, um_status) values($1,$2,$3,$4,$5,0) RETURNING *",
-        params = [req.body.um_username,req.body.um_password,req.body.um_confirm_password,req.body.um_assign_role,req.body.um_emp_id.emp_id]
+    var singleInsert = "INSERT INTO users(username,password,first_name,icon_image,is_online) values($1,$2,$3,$4,0) RETURNING *",
+        params = [req.body.um_user_name,req.body.um_user_password,req.body.um_emp_id.emp_name,req.body.um_emp_id.emp_image]
     client.query(singleInsert, params, function (error, result) {
         results.push(result.rows[0]); // Will contain your inserted rows
         done();
+        client.query("INSERT into user_master(um_emp_id,um_users_id,um_rm_id,um_status) values($1,$2,$3,0) RETURNING *",[req.body.um_emp_id.emp_id,result.rows[0].id,req.body.um_rm_id.rm_id]);
         return res.json(results);
     });
 
@@ -74,9 +76,10 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
   });
 });
 
+
 router.post('/edit/:usermId', oauth.authorise(), (req, res, next) => {
   const results = [];
-  const id = req.params.usermId;
+  console.log(req.body);
   pool.connect(function(err, client, done){
     if(err) {
       done();
@@ -86,11 +89,11 @@ router.post('/edit/:usermId', oauth.authorise(), (req, res, next) => {
     }
     client.query('BEGIN;');
     
-    var singleInsert = 'update user_master set um_username=$1, um_password=$2, um_confirm_password=$3, um_assign_role=$4, um_emp_id=$5, um_updated_at=now() where um_id=$6 RETURNING *',
-        params = [req.body.um_username,req.body.um_password,req.body.um_confirm_password,req.body.um_assign_role,req.body.um_emp_id.emp_id,id];
+    var singleInsert = 'update users set password=$1,updated_at=now() where id=$2 RETURNING *',
+        params = [req.body.um_user_password,req.body.um_users_id];
     client.query(singleInsert, params, function (error, result) {
         results.push(result.rows[0]); // Will contain your inserted rows
-        
+        client.query("update role_master set rm_name=$1,rm_updated_at=now() where rm_id=$2",[req.body.um_rm_id.rm_name,req.body.um_rm_id.rm_id])
         client.query('COMMIT;');
         done();
         return res.json(results);
@@ -140,9 +143,11 @@ router.post('/user/total', oauth.authorise(), (req, res, next) => {
     const strqry =  "SELECT count(um.um_id) as total "+
                     "from user_master um "+
                     "inner join employee_master emp on um.um_emp_id=emp.emp_id "+
+                    "left outer join role_master rm on um.um_rm_id=rm.rm_id "+
+                    "left outer join users u on um.um_users_id=u.id "+
                     "where um.um_status = 0 "+
                     "and emp.emp_status = 'active' "+
-                    "and LOWER(um_username||''||um_password||''||um_confirm_password||''||um_assign_role||''||um_emp_id) LIKE LOWER($1);";
+                    "and LOWER(um_users_id||''||um_rm_id||''||um_emp_id) LIKE LOWER($1);";
 
     const query = client.query(strqry,[str]);
     query.on('row', (row) => {
@@ -172,10 +177,11 @@ router.post('/user/limit', oauth.authorise(), (req, res, next) => {
     const strqry =  "SELECT * "+
                     "FROM user_master um "+
                     "inner join employee_master emp on um.um_emp_id=emp.emp_id "+
-                    "left outer join role_master rm on um.um_id=rm.rm_um_id "+
+                    "left outer join role_master rm on um.um_rm_id=rm.rm_id "+
+                    "left outer join users u on um.um_users_id=u.id "+
                     "where um.um_status = 0 "+
                     "and emp.emp_status = 'active' "+
-                    "and LOWER(um_username||''||um_password||''||um_confirm_password||''||um_assign_role||''||um_emp_id) LIKE LOWER($1) "+
+                    "and LOWER(um_users_id||''||um_rm_id||''||um_emp_id) LIKE LOWER($1) "+
                     "order by um.um_id desc LIMIT $2 OFFSET $3";
 
     const query = client.query(strqry,[ str, req.body.number, req.body.begin]);
