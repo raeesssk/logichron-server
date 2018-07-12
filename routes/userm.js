@@ -4,7 +4,8 @@ var oauth = require('../oauth/index');
 var pg = require('pg');
 var path = require('path');
 var config = require('../config.js');
-
+var encryption = require('../commons/encryption.js');
+// const bcrypt = require('bcryptjs');
 var pool = new pg.Pool(config);
 
 router.get('/', oauth.authorise(), (req, res, next) => {
@@ -55,7 +56,6 @@ router.get('/:usermId', oauth.authorise(), (req, res, next) => {
 
 router.post('/add', oauth.authorise(), (req, res, next) => {
   const results = [];
-  console.log(req.body);
   pool.connect(function(err, client, done){
     if(err) {
       done();
@@ -63,14 +63,26 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
       console.log("the error is"+err);
       return res.status(500).json({success: false, data: err});
     }
-    var singleInsert = "INSERT INTO users(username,password,first_name,icon_image,is_online) values($1,$2,$3,$4,0) RETURNING *",
-        params = [req.body.um_user_name,req.body.um_user_password,req.body.um_emp_id.emp_name,req.body.um_emp_id.emp_image]
-    client.query(singleInsert, params, function (error, result) {
-        results.push(result.rows[0]); // Will contain your inserted rows
-        done();
-        client.query("INSERT into user_master(um_emp_id,um_users_id,um_rm_id,um_status) values($1,$2,$3,0) RETURNING *",[req.body.um_emp_id.emp_id,result.rows[0].id,req.body.um_rm_id.rm_id]);
-        return res.json(results);
-    });
+
+    // bcrypt.hash(req.body.um_user_password, 5, function( err, bcryptedPassword) {
+    //     var singleInsert = "INSERT INTO users(username,password,first_name,icon_image,is_online) values($1,$2,$3,$4,0) RETURNING *",
+    //     params = [req.body.um_user_name,bcryptedPassword,req.body.um_emp_id.emp_name,req.body.um_emp_id.emp_image]
+    //     client.query(singleInsert, params, function (error, result) {
+    //         results.push(result.rows[0]); // Will contain your inserted rows
+    //         client.query("INSERT into user_master(um_emp_id,um_users_id,um_rm_id,um_status) values($1,$2,$3,0) RETURNING *",[req.body.um_emp_id.emp_id,result.rows[0].id,req.body.um_rm_id.rm_id]);
+    //         done();
+    //         return res.json(results);
+    //     });
+    // });
+
+      var singleInsert = "INSERT INTO users(username,password,first_name,icon_image,is_online) values($1,$2,$3,$4,0) RETURNING *",
+        params = [req.body.um_user_name,encryption.encrypt(req.body.um_user_password),req.body.um_emp_id.emp_name,req.body.um_emp_id.emp_image]
+        client.query(singleInsert, params, function (error, result) {
+            results.push(result.rows[0]); // Will contain your inserted rows
+            client.query("INSERT into user_master(um_emp_id,um_users_id,um_rm_id,um_status) values($1,$2,$3,0) RETURNING *",[req.body.um_emp_id.emp_id,result.rows[0].id,req.body.um_rm_id.rm_id]);
+            done();
+            return res.json(results);
+        });
 
     done(err);
   });

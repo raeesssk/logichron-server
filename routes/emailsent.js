@@ -4,15 +4,15 @@ var router = express.Router();
 var oauth = require('../oauth/index');
 var http = require('http');
 
-router.post('/', oauth.authorise(), (req, res, next) => {
+router.post('/', (req, res, next) => {
 
   let transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
+      host: 'zakrshkh07@gmail.com',
       port: 465,
       secure: true, // secure:true for port 465, secure:false for port 587
       auth: {
-          user: 'greenacpune@gmail.com',
-          pass: 'a9225506285'
+          user: 'info@3commastechnologies.com',
+          pass: '#Info3Commas$'
       }
   });
 
@@ -20,9 +20,9 @@ router.post('/', oauth.authorise(), (req, res, next) => {
   let mailOptions = {
       from: '"Green Air Conditioning Services" <greenacpune@gmail.com>', // sender address
       to: req.body.recipient, // list of receivers
-      subject: req.body.subj, // Subject line
+      subject: 'password', // Subject line
       // text: 'Hello world ?', // plain text body
-      html: req.body.message // html body
+      html: '<p>this is your password link</p>' // html body
   };
 
   // send mail with defined transport object

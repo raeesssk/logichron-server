@@ -7,7 +7,8 @@ var config = require('../config.js');
 
 var pool = new pg.Pool(config);
 
-router.get('/', oauth.authorise(), (req, res, next) => {
+router.post('/forgot', (req, res, next) => {
+  console.log(req.body);
   const results = [];
   pool.connect(function(err, client, done){
     if(err) {
@@ -16,7 +17,7 @@ router.get('/', oauth.authorise(), (req, res, next) => {
       console.log("the error is"+err);
       return res.status(500).json({success: false, data: err});
     }
-    const query = client.query("SELECT * FROM employee_master where emp_status='active' order by emp_id desc");
+    const query = client.query("SELECT emp_email_id FROM employee_master where emp_email_id=$1",[req.body.email]);
     query.on('row', (row) => {
       results.push(row);
     });

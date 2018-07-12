@@ -58,6 +58,7 @@ router.post('/changepassword', oauth.authorise(), (req, res, next) => {
 
 router.post('/isonline', oauth.authorise(), (req, res, next) => {
   const results = [];
+  
   pool.connect(function(err, client, done){
     if(err) {
       done();

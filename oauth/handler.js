@@ -1,11 +1,11 @@
 
 var model = module.exports;
-
+// const bcrypt = require('bcryptjs');
 var pg = require('pg');
 var config = require('../config.js');
 // var connectionString = process.env.DATABASE_URL || 'postgres://postgres:zeartech@localhost:5432/orientfurniture';
 
-// var Crypt = require('../commons/encryption');
+var encryption = require('../commons/encryption.js');
 
 var pool = new pg.Pool(config);
 //
@@ -76,8 +76,10 @@ model.saveAccessToken = function (token, clientId, expires, userId, callback) {
 model.getUser = function (username, password, callback) {
   console.log("getUser");
   var id = null;
+  // var pass=encryption.decrypt(password);
+  // console.log(pass);
   pool.connect(function(err, client, done){
-    const query = client.query('select id from users where  username = $1 and password = $2', [username,password]);
+    const query = client.query('select id from users where  username = $1 and password = $2', [username,encryption.encrypt(password)]);
     
     query.on('row', (row) => {
       id = row.id;
@@ -89,7 +91,6 @@ model.getUser = function (username, password, callback) {
   });
   // pool.end();
 };
-
 /*
  * Required to support refreshToken grant type
  */
