@@ -43,7 +43,35 @@ router.get('/:usermId', oauth.authorise(), (req, res, next) => {
     // SQL Query > Select Data
     const query = client.query('SELECT * FROM user_master um inner join users u on um.um_users_id=u.id left outer join role_master rm on um.um_rm_id=rm.rm_id left outer join employee_master em on um.um_emp_id=em.emp_id where um_id=$1',[id]);
     query.on('row', (row) => {
+      console.log(row);
+      row.pass = encryption.decrypt(row.password);
+      console.log(row);
       results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
+
+
+router.post('/check/user', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    const query = client.query("SELECT * FROM users us inner join user_master um on um.um_users_id=us.id where username=$1",[req.body.um_user_name]);
+    query.on('row', (row) => {
+      results.push(row);
+      console.log(results);
     });
     query.on('end', () => {
       done();
@@ -102,9 +130,10 @@ router.post('/edit/:usermId', oauth.authorise(), (req, res, next) => {
     client.query('BEGIN;');
     
     var singleInsert = 'update users set password=$1,updated_at=now() where id=$2 RETURNING *',
-        params = [req.body.um_user_password,req.body.um_users_id];
+        params = [encryption.encrypt(req.body.um_user_password),req.body.um_users_id];
     client.query(singleInsert, params, function (error, result) {
         results.push(result.rows[0]); // Will contain your inserted rows
+
         client.query("update role_master set rm_name=$1,rm_updated_at=now() where rm_id=$2",[req.body.um_rm_id.rm_name,req.body.um_rm_id.rm_id])
         client.query('COMMIT;');
         done();
@@ -117,6 +146,7 @@ router.post('/edit/:usermId', oauth.authorise(), (req, res, next) => {
 
 router.post('/delete/:usermId', oauth.authorise(), (req, res, next) => {
   const results = [];
+  console.log(req.body);
   const id = req.params.usermId;
   pool.connect(function(err, client, done){
     if(err) {

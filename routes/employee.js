@@ -4,6 +4,8 @@ var oauth = require('../oauth/index');
 var pg = require('pg');
 var path = require('path');
 var config = require('../config.js');
+var multer = require('multer');
+var filenamestore = "";
 
 var pool = new pg.Pool(config);
 
@@ -56,8 +58,27 @@ router.get('/:employeeId', oauth.authorise(), (req, res, next) => {
 
 router.post('/add', oauth.authorise(), (req, res, next) => {
   const results = [];
-  const employee=req.body.employee;
-  const image=req.body.image;
+  var Storage = multer.diskStorage({
+      destination: function (req, file, callback) {
+          // callback(null, "./images");
+            callback(null, '../logichron/resources/images-old');
+            
+      },
+      filename: function (req, file, callback) {
+          var fi = file.fieldname + "_" + Date.now() + "_" + file.originalname;
+          filenamestore = "../resources/assets/img"+fi;
+          callback(null, fi);
+      }
+  });
+
+  var upload = multer({ storage: Storage }).array("imgUploader"); 
+  
+  upload(req, res, function (err) { 
+    if (err) { 
+        return res.end("Something went wrong!"+err); 
+    } 
+     
+  });
   pool.connect(function(err, client, done){
     if(err) {
       done();
@@ -67,7 +88,7 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
     }
 
     var singleInsert = "INSERT INTO employee_master(emp_name, emp_mobile, emp_address, emp_correspondence_address, emp_aadhar_no, emp_pancard_no, emp_designation, emp_emp_no, emp_email_id, emp_qualification, emp_image, emp_status) values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'active') RETURNING *",
-        params = [employee.emp_name,employee.emp_mobile,employee.emp_address,employee.emp_correspondence_address,employee.emp_aadhar_no,employee.emp_pancard_no,employee.emp_designation,employee.emp_emp_no,employee.emp_email_id,employee.emp_qualification,image.emp_image]
+        params = [req.body.emp_name,req.body.emp_mobile,req.body.emp_address,req.body.emp_correspondence_address,req.body.emp_aadhar_no,req.body.emp_pancard_no,req.body.emp_designation,req.body.emp_emp_no,req.body.emp_email_id,req.body.emp_qualification,filenamestore]
     client.query(singleInsert, params, function (error, result) {
         results.push(result.rows[0]); // Will contain your inserted rows
         done();
