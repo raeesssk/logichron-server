@@ -43,7 +43,7 @@ router.get('/:employeeId', oauth.authorise(), (req, res, next) => {
       return res.status(500).json({success: false, data: err});
     }
     // SQL Query > Select Data
-    const query = client.query('SELECT * FROM employee_master where emp_id=$1',[id]);
+    const query = client.query('SELECT emp_name,emp_mobile,emp_address,emp_correspondence_address,emp_aadhar_no,emp_pancard_no,emp_designation,emp_emp_no,emp_email_id,emp_qualification,emp_image,emp_created_at,emp_updated_at,emp_status FROM employee_master where emp_id=$1',[id]);
     query.on('row', (row) => {
       results.push(row);
     });
@@ -87,7 +87,7 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
       return res.status(500).json({success: false, data: err});
     }
 
-    var singleInsert = "INSERT INTO employee_master(emp_name, emp_mobile, emp_address, emp_correspondence_address, emp_aadhar_no, emp_pancard_no, emp_designation, emp_emp_no, emp_email_id, emp_qualification, emp_image, emp_status) values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'active') RETURNING *",
+    var singleInsert = "INSERT INTO employee_master(emp_name, emp_mobile, emp_address, emp_correspondence_address, emp_aadhar_no, emp_pancard_no, emp_designation, emp_emp_no, emp_email_id, emp_qualification, emp_image, emp_status) values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,0) RETURNING *",
         params = [req.body.emp_name,req.body.emp_mobile,req.body.emp_address,req.body.emp_correspondence_address,req.body.emp_aadhar_no,req.body.emp_pancard_no,req.body.emp_designation,req.body.emp_emp_no,req.body.emp_email_id,req.body.emp_qualification,filenamestore]
     client.query(singleInsert, params, function (error, result) {
         results.push(result.rows[0]); // Will contain your inserted rows
@@ -137,7 +137,7 @@ router.post('/delete/:employeeId', oauth.authorise(), (req, res, next) => {
     }
     client.query('BEGIN;');
 
-    var singleInsert = "update employee_master set emp_status='inactive', emp_updated_at=now() where emp_id=$1 RETURNING *",
+    var singleInsert = "update employee_master set emp_status=1, emp_updated_at=now() where emp_id=$1 RETURNING *",
         params = [id]
     client.query(singleInsert, params, function (error, result) {
         results.push(result.rows[0]); // Will contain your inserted rows
@@ -164,8 +164,8 @@ router.post('/employee/total', oauth.authorise(), (req, res, next) => {
     console.log(str);
     const strqry =  "SELECT count(emp_id) as total "+
                     "from employee_master "+
-                    "where emp_status='active' "+
-                    "and LOWER(emp_name||''||emp_mobile||''||emp_address||''||emp_correspondence_address||''||emp_aadhar_no) LIKE LOWER($1);";
+                    "where emp_status=0 "+
+                    "and LOWER(emp_name||''||emp_mobile) LIKE LOWER($1);";
 
     const query = client.query(strqry,[str]);
     query.on('row', (row) => {
@@ -194,8 +194,8 @@ router.post('/employee/limit', oauth.authorise(), (req, res, next) => {
 
     const strqry =  "SELECT * "+
                     "FROM employee_master emp "+
-                    "where emp.emp_status = 'active' "+
-                    "and LOWER(emp_name||''||emp_mobile||''||emp_address||''||emp_correspondence_address||''||emp_aadhar_no) LIKE LOWER($1) "+
+                    "where emp.emp_status = 0 "+
+                    "and LOWER(emp_name||''||emp_mobile) LIKE LOWER($1) "+
                     "order by emp.emp_id desc LIMIT $2 OFFSET $3";
 
     const query = client.query(strqry,[ str, req.body.number, req.body.begin]);
@@ -225,7 +225,7 @@ router.post('/typeahead/search', oauth.authorise(), (req, res, next) => {
 
     const strqry =  "SELECT * "+
                     "FROM employee_master emp "+
-                    "where emp.emp_status = 'active' "+
+                    "where emp.emp_status = 0 "+
                     "and LOWER(emp_name||' '||emp_mobile) LIKE LOWER($1) "+
                     "order by emp.emp_id desc LIMIT 10";
 

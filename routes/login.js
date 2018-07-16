@@ -4,6 +4,7 @@ var oauth = require('../oauth/index');
 var pg = require('pg');
 var path = require('path');
 var config = require('../config.js');
+var encryption = require('../commons/encryption.js');
 
 var pool = new pg.Pool(config);
 
@@ -41,16 +42,37 @@ router.post('/changepassword', oauth.authorise(), (req, res, next) => {
       return res.status(500).json({success: false, data: err});
     }
     // SQL Query > Select Data
-    client.query('update users set password=$1 where username=$2',[req.body.conpassword,req.body.username]);
-    const query = client.query('SELECT username FROM users');
-    // Stream results back one row at a time
-    query.on('row', (row) => {
-      results.push(row);
+
+    var singleInsert = "update users set password=$1 where username=$2 RETURNING *",
+        params = [req.body.conpassword,req.body.username]
+    client.query(singleInsert, params, function (error, result) {
+        results.push(result.rows[0]); // Will contain your inserted rows
+        done();
+        return res.json(results);
     });
-    // After all data is returned, close connection and return results
-    query.on('end', () => {
+    done(err);
+  });
+});
+
+router.post('/resetpassword/:employeeId',  (req, res, next) => {
+  const results = [];
+
+  const id = req.params.employeeId;
+  pool.connect(function(err, client, done){
+    if(err) {
       done();
-      return res.json(results);
+      done(err);
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    // SQL Query > Select Data
+    
+    var singleInsert = "update users set password=$1 where id=$2 RETURNING *",
+        params = [encryption.encrypt(req.body.password),id]
+    client.query(singleInsert, params, function (error, result) {
+        results.push(result.rows[0]); // Will contain your inserted rows
+        done();
+        return res.json(results);
     });
     done(err);
   });
@@ -68,7 +90,7 @@ router.post('/isonline', oauth.authorise(), (req, res, next) => {
     }
     // // SQL Query > Select Data
     client.query('update users set is_online=1, last_login=now() where username=$1',[req.body.username]);
-    const query = client.query('SELECT username,first_name,icon_image FROM users where username=$1',[req.body.username]);
+    const query = client.query('SELECT * FROM user_master um inner join users us on um.um_users_id=us.id inner join role_master rm on um.um_rm_id=rm.rm_id where username=$1',[req.body.username]);
     // Stream results back one row at a time
     query.on('row', (row) => {
       results.push(row);
@@ -167,4 +189,27 @@ router.post('/profile/image', oauth.authorise(), (req, res, next) => {
 //   });
 // });
 
+router.get('/check/permission', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      done(err);
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    // SQL Query > Select Data
+    const query = client.query('SELECT * FROM role_master');
+    // Stream results back one row at a time
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    // After all data is returned, close connection and return results
+    query.on('end', () => {
+      done();
+      return res.json(results);
+    });
+    done(err);
+  });
+});
 module.exports = router;

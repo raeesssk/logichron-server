@@ -140,7 +140,7 @@ router.post('/job/total', oauth.authorise(), (req, res, next) => {
     const strqry =  "SELECT count(dm_id) as total "+
                     "from job_master "+
                     "where dm_status='pending' "+
-                    "and LOWER(dm_first_name||''||dm_last_name||''||dm_job_title||''||dm_job_level||''||dm_dept) LIKE LOWER($1);";
+                    "and LOWER(dm_first_name||''||dm_last_name) LIKE LOWER($1);";
 
     const query = client.query(strqry,[str]);
     query.on('row', (row) => {
@@ -170,7 +170,7 @@ router.post('/job/limit', oauth.authorise(), (req, res, next) => {
     const strqry =  "SELECT * "+
                     "FROM job_master dm "+
                     "where dm.dm_status = 'pending' "+
-                    "and LOWER(dm_first_name||''||dm_last_name||''||dm_job_title||''||dm_job_level||''||dm_dept) LIKE LOWER($1) "+
+                    "and LOWER(dm_first_name||''||dm_last_name) LIKE LOWER($1) "+
                     "order by dm.dm_id desc LIMIT $2 OFFSET $3";
 
     const query = client.query(strqry,[ str, req.body.number, req.body.begin]);

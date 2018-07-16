@@ -37,7 +37,7 @@ router.get('/', oauth.authorise(), (req, res, next) => {
       console.log("the error is"+err);
       return res.status(500).json({success: false, data: err});
     }
-    const query = client.query("SELECT * FROM permission_master where pm_status=0 order by pm_id asc");
+    const query = client.query("SELECT pm_name,pm_add,pm_edit,pm_delete,pm_list,pm_status,pm_created_at,pm_updated_at FROM permission_master where pm_status=0 order by pm_id asc");
     query.on('row', (row) => {
       results.push(row);
     });
@@ -61,7 +61,7 @@ router.get('/:roleId', oauth.authorise(), (req, res, next) => {
       return res.status(500).json({success: false, data: err});
     }
     // SQL Query > Select Data
-    const query = client.query('SELECT * FROM role_master where rm_id=$1',[id]);
+    const query = client.query('SELECT rm_name,rm_description,rm_status,rm_updated_at,rm_created_at FROM role_master where rm_id=$1',[id]);
     query.on('row', (row) => {
       results.push(row);
     });
@@ -84,7 +84,7 @@ router.get('/permission/:roleId', oauth.authorise(), (req, res, next) => {
       console.log("the error is"+err);
       return res.status(500).json({success: false, data: err});
     }
-    const query = client.query("SELECT * FROM role_permission_master rpm inner join permission_master pm on rpm.rpm_pm_id=pm.pm_id left outer join role_master rm on rpm.rpm_rm_id=rm.rm_id where rm_id=$1",[id]);
+    const query = client.query("SELECT rpm_rm_id,rpm_pm_id,rpm_add,rpm_edit,rpm_delete,rpm_list,pm_name,pm_add,pm_edit,pm_delete,pm_list,pm_status,pm_created_at,pm_updated_at,rm_name,rm_description,rm_status,rm_updated_at,rm_created_at FROM role_permission_master rpm inner join permission_master pm on rpm.rpm_pm_id=pm.pm_id left outer join role_master rm on rpm.rpm_rm_id=rm.rm_id where rm_id=$1",[id]);
     query.on('row', (row) => {
       results.push(row);
 
