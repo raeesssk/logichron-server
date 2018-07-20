@@ -90,7 +90,7 @@ router.post('/isonline', oauth.authorise(), (req, res, next) => {
     }
     // // SQL Query > Select Data
     client.query('update users set is_online=1, last_login=now() where username=$1',[req.body.username]);
-    const query = client.query('SELECT * FROM user_master um inner join users us on um.um_users_id=us.id inner join role_master rm on um.um_rm_id=rm.rm_id where username=$1',[req.body.username]);
+    const query = client.query('SELECT * FROM user_master um inner join users us on um.um_users_id=us.id inner join role_master rm on um.um_rm_id=rm.rm_id inner join role_permission_master rpm on rpm.rpm_rm_id=rm.rm_id inner join permission_master pm on rpm.rpm_pm_id=pm.pm_id where username=$1',[req.body.username]);
     // Stream results back one row at a time
     query.on('row', (row) => {
       results.push(row);

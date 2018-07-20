@@ -61,7 +61,7 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
   var Storage = multer.diskStorage({
       destination: function (req, file, callback) {
           // callback(null, "./images");
-            callback(null, '../logichron/resources/images-old');
+            callback(null, '../logichron/resources/images-new');
             
       },
       filename: function (req, file, callback) {
@@ -90,6 +90,8 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
     var singleInsert = "INSERT INTO employee_master(emp_name, emp_mobile, emp_address, emp_correspondence_address, emp_aadhar_no, emp_pancard_no, emp_designation, emp_emp_no, emp_email_id, emp_qualification, emp_image, emp_status) values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,0) RETURNING *",
         params = [req.body.emp_name,req.body.emp_mobile,req.body.emp_address,req.body.emp_correspondence_address,req.body.emp_aadhar_no,req.body.emp_pancard_no,req.body.emp_designation,req.body.emp_emp_no,req.body.emp_email_id,req.body.emp_qualification,filenamestore]
     client.query(singleInsert, params, function (error, result) {
+
+        console.log(result);
         results.push(result.rows[0]); // Will contain your inserted rows
         done();
         return res.json(results);

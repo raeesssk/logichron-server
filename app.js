@@ -29,6 +29,7 @@ var role = require('./routes/role');
 var job = require('./routes/job');
 var manager = require('./routes/manager');
 var permission = require('./routes/permission');
+var question = require('./routes/question');
 
 
 var pmx = require('pmx').init({
@@ -76,6 +77,7 @@ app.use('/role', role);
 app.use('/job', job);
 app.use('/manager', manager);
 app.use('/permission', permission);
+app.use('/question', question);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
