@@ -91,7 +91,6 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
         params = [req.body.emp_name,req.body.emp_mobile,req.body.emp_address,req.body.emp_correspondence_address,req.body.emp_aadhar_no,req.body.emp_pancard_no,req.body.emp_designation,req.body.emp_emp_no,req.body.emp_email_id,req.body.emp_qualification,filenamestore]
     client.query(singleInsert, params, function (error, result) {
 
-        console.log(result);
         results.push(result.rows[0]); // Will contain your inserted rows
         done();
         return res.json(results);

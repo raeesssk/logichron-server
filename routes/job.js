@@ -125,15 +125,15 @@ router.post('/edit/:jobId', oauth.authorise(), (req, res, next) => {
     client.query(singleInsert, params, function (error, result) {
         results.push(result.rows[0]); // Will contain your inserted rows
         answer.forEach(function(product,index){
-          client.query("update question_master set qm_questions=$1,qm_answers=$2 where qm_dm_id=$3 RETURNING *",[product.qm_questions,product.qm_answers,result.rows[0].dm_id]);
+          client.query("update question_master set qm_questions=$1,qm_answers=$2 where qm_dm_id=$3",[product.qm_questions,product.qm_answers,result.rows[0].dm_id]);
         client.query('update manager_master set mm_pm_name=$1 where mm_id=$2',[req.body.mm_pm_name,req.body.mm_id]);
         });
         ansadd.forEach(function(value,index){
-          client.query("INSERT into question_master(qm_questions,qm_answers,qm_dm_id,qm_status) values($1,$2,$3,0) RETURNING *",[value.qm_questions,value.qm_answers,result.rows[0].dm_id]);/*
+          client.query("INSERT into question_master(qm_questions,qm_answers,qm_dm_id,qm_status) values($1,$2,$3,0)x`",[value.qm_questions,value.qm_answers,result.rows[0].dm_id]);/*
           client.query("update question_master set qm_questions=$1,qm_answers=$2 where qm_dm_id=$3 RETURNING *",[value.qm_questions,value.qm_answers,result.rows[0].dm_id]);*/
         });
         remove.forEach(function(val,index){
-           client.query("update question_master set qm_status=1 where qm_id=$1",[val.qm_id]);
+           client.query("delete from question_master where qm_id=$1",[val.qm_id]);
         });
         
         client.query('COMMIT;');

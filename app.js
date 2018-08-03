@@ -30,6 +30,7 @@ var job = require('./routes/job');
 var manager = require('./routes/manager');
 var permission = require('./routes/permission');
 var question = require('./routes/question');
+var campaign= require('./routes/campaign');
 
 
 var pmx = require('pmx').init({
@@ -78,6 +79,7 @@ app.use('/job', job);
 app.use('/manager', manager);
 app.use('/permission', permission);
 app.use('/question', question);
+app.use('/campaign', campaign);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
