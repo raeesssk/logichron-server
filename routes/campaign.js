@@ -535,4 +535,35 @@ router.get('/Denyview/:campaignId', oauth.authorise(), (req, res, next) => {
   });
 });
 
+router.post('/typeahead/search', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    const str = "%"+req.body.search+"%";
+    // SQL Query > Select Data
+
+    const strqry =  "SELECT * "+
+                    "FROM campaign_master cm "+
+                    "where cm.cm_status = 0 "+
+                    "and LOWER(cm_campaign_name||' '||cm_title) LIKE LOWER($1) "+
+                    "order by cm.cm_id desc LIMIT 10";
+
+    const query = client.query(strqry,[str]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+    done(err);
+  });
+});
+
 module.exports = router;
