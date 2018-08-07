@@ -159,7 +159,6 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
   const allowDomainList=req.body.allowDomainList;
   const customQuestionList=req.body.customQuestionList;
   const deniedDomainList=req.body.deniedDomainList;
-  console.log(campaign);
   pool.connect(function(err, client, done){
     if(err) {
       done();
@@ -209,21 +208,21 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
 router.post('/edit/:campaignId', oauth.authorise(), (req, res, next) => {
   const results = [];
   const id = req.params.campaignId;
-  const campagin=req.body.campaign;
+  const campaign=req.body.campaign;
   const oldaccountList=req.body.oldaccountList;
-  const newaccountList=req.body.newaccountList;
+  const accountList=req.body.accountList;
   const removeAccount=req.body.removeAccount;
-  const oldsuppressionList=req.body.oldsuppressionList;
-  const newsuppressionList=req.body.newsuppressionList;
+  const oldsupressionList=req.body.oldsupressionList;
+  const supressionList=req.body.supressionList;
   const removesuppressionList=req.body.removesuppressionList;
-  const oldAllowedDomain=req.body.oldAllowedDomain;
-  const newAllowedDomain=req.body.newAllowedDomain;
+  const oldallowDomainList=req.body.oldallowDomainList;
+  const allowDomainList=req.body.allowDomainList;
   const removeAllowedDomain=req.body.removeAllowedDomain;
-  const oldcustomQuestion=req.body.oldcustomQuestion;
-  const newcustomQuestion=req.body.newcustomQuestion;
+  const oldcustomQuestionList=req.body.oldcustomQuestionList;
+  const customQuestionList=req.body.customQuestionList;
   const removecustomQuestion=req.body.removecustomQuestion;
-  const oldDeniedDomain=req.body.oldDeniedDomain;
-  const newDeniedDomain=req.body.newDeniedDomain;
+  const olddeniedDomainList=req.body.olddeniedDomainList;
+  const deniedDomainList=req.body.deniedDomainList;
   const removeDeniedDomain=req.body.removeDeniedDomain;
   pool.connect(function(err, client, done){
     if(err) {
@@ -235,7 +234,7 @@ router.post('/edit/:campaignId', oauth.authorise(), (req, res, next) => {
     client.query('BEGIN;');
     
     var designInsert = 'update public.campaign_master set  cm_first_dely=$1, cm_end_date=$2, cm_dely_frequency=$3, cm_campaign_name=$4, cm_restrict=$5, cm_account_list=$6, cm_supression_file=$7, cm_domain_limit=$8, cm_emp_size=$9, cm_disqualifies=$10, cm_title=$11, cm_lead_count=$12, cm_geo=$13, cm_allow_domain=$14, cm_revenue=$15, cm_custom_question=$16, cm_denied_domain=$17, cm_campaign_asset=$18, cm_industry=$19, cm_dept=$20, cm_method=$21, cm_job=$22, cm_vertical=$23,  cm_updated_at=now() where cm_id=$24 RETURNING *',
-        params = [campagin.cm_first_dely,campagin.cm_end_date,campagin.cm_dely_frequency,campagin.cm_campaign_name,campagin.cm_restrict,campagin.cm_account_list,campagin.cm_supression_file,campagin.cm_domain_limit,campagin.cm_emp_size,campagin.cm_disqualifies,campagin.cm_title,campagin.cm_lead_count,campagin.cm_geo,campagin.cm_allow_domain,campagin.cm_revenue,campagin.cm_custom_question,campagin.cm_denied_domain,campagin.cm_campaign_asset,campagin.cm_industry,campagin.cm_dept,campagin.cm_method,campagin.cm_job,campaign.cm_vertical,id];
+        params = [campaign.cm_first_dely,campaign.cm_end_date,campaign.cm_dely_frequency,campaign.cm_campaign_name,campaign.cm_restrict,campaign.cm_account_list,campaign.cm_supression_file,campaign.cm_domain_limit,campaign.cm_emp_size,campaign.cm_disqualifies,campaign.cm_title,campaign.cm_lead_count,campaign.cm_geo,campaign.cm_allow_domain,campaign.cm_revenue,campaign.cm_custom_question,campaign.cm_denied_domain,campaign.cm_campaign_asset,campaign.cm_industry,campaign.cm_dept,campaign.cm_method,campaign.cm_job,campaign.cm_vertical,id];
     client.query(designInsert, params, function (error, result) {
         results.push(result.rows[0]); // Will contain your inserted rows
         //account list edit//
@@ -249,7 +248,7 @@ router.post('/edit/:campaignId', oauth.authorise(), (req, res, next) => {
             [product.amcm_company,product.amcm_website,result.rows[0].cm_id,product.amcm_id]);
         });
 
-        newaccountList.forEach(function(product, index) {
+        accountList.forEach(function(product, index) {
           client.query("INSERT into account_master_campaign_master(amcm_cm_id,amcm_company,amcm_website,amcm_status)values ($1,$2,$3,0) RETURNING *",
             [result.rows[0].cm_id,product.amcm_company,product.amcm_website]);
         //client.query('update design_product_master set dtm_part_no=$1, dtm_part_name=$2, dtm_qty=$3, dtm_updated_at=now() where dtm_id=$4',[product.dtm_part_no,product.dtm_part_name,product.dtm_qty,result.rows[0].dm_id]);
@@ -261,12 +260,12 @@ router.post('/edit/:campaignId', oauth.authorise(), (req, res, next) => {
             [product.scm_id]);
         });
 
-        oldsuppressionList.forEach(function(product, index) {
+        oldsupressionList.forEach(function(product, index) {
           client.query('update suppression_campaign_master set scm_company=$1, scm_website=$2, scm_cm_id=$3, scm_updated_at=now() where scm_id=$4',
             [product.scm_company,product.scm_website,result.rows[0].cm_id,product.scm_id]);
         });
 
-        newsuppressionList.forEach(function(product, index) {
+        supressionList.forEach(function(product, index) {
           client.query("INSERT into suppression_campaign_master(scm_cm_id,scm_company,scm_website,scm_status)values ($1,$2,$3,0) RETURNING *",
             [result.rows[0].cm_id,product.scm_company,product.scm_website]);
         //client.query('update design_product_master set dtm_part_no=$1, dtm_part_name=$2, dtm_qty=$3, dtm_updated_at=now() where dtm_id=$4',[product.dtm_part_no,product.dtm_part_name,product.dtm_qty,result.rows[0].dm_id]);
@@ -278,12 +277,12 @@ router.post('/edit/:campaignId', oauth.authorise(), (req, res, next) => {
             [product.adcm_id]);
         });
 
-        oldAllowedDomain.forEach(function(product, index) {
+        oldallowDomainList.forEach(function(product, index) {
           client.query('update allow_domain_campaign_master set adcm_website=$1, adcm_cm_id=$2, adcm_updated_at=now() where adcm_id=$3',
             [product.adcm_website,result.rows[0].cm_id,product.adcm_id]);
         });
 
-        newAllowedDomain.forEach(function(product, index) {
+        allowDomainList.forEach(function(product, index) {
           client.query("INSERT into allow_domain_campaign_master(adcm_cm_id,adcm_website,adcm_status)values ($1,$2,0) RETURNING *",
             [result.rows[0].cm_id,product.adcm_website]);
         //client.query('update design_product_master set dtm_part_no=$1, dtm_part_name=$2, dtm_qty=$3, dtm_updated_at=now() where dtm_id=$4',[product.dtm_part_no,product.dtm_part_name,product.dtm_qty,result.rows[0].dm_id]);
@@ -295,12 +294,12 @@ router.post('/edit/:campaignId', oauth.authorise(), (req, res, next) => {
             [product.cmcm_id]);
         });
 
-        oldcustomQuestion.forEach(function(product, index) {
-          client.query('update allow_domain_campaign_master set cmcm_question=$1, cmcm_cm_id=$2, cmcm_updated_at=now() where cmcm_id=$3',
+        oldcustomQuestionList.forEach(function(product, index) {
+          client.query('update custom_question_campaign_master set cmcm_question=$1, cmcm_cm_id=$2, cmcm_updated_at=now() where cmcm_id=$3',
             [product.cmcm_question,result.rows[0].cm_id,product.cmcm_id]);
         });
 
-        newcustomQuestion.forEach(function(product, index) {
+        customQuestionList.forEach(function(product, index) {
           client.query("INSERT into custom_question_campaign_master(cmcm_cm_id,cmcm_question,cmcm_status)values ($1,$2,0) RETURNING *",
             [result.rows[0].cm_id,product.cmcm_question]);
         //client.query('update design_product_master set dtm_part_no=$1, dtm_part_name=$2, dtm_qty=$3, dtm_updated_at=now() where dtm_id=$4',[product.dtm_part_no,product.dtm_part_name,product.dtm_qty,result.rows[0].dm_id]);
@@ -312,12 +311,12 @@ router.post('/edit/:campaignId', oauth.authorise(), (req, res, next) => {
             [product.ddcm_id]);
         });
 
-        oldDeniedDomain.forEach(function(product, index) {
-          client.query('update allow_domain_campaign_master set ddcm_website=$1, ddcm_cm_id=$2, ddcm_updated_at=now() where ddcm_id=$3',
+        olddeniedDomainList.forEach(function(product, index) {
+          client.query('update denied_domain_campaign_master set ddcm_website=$1, ddcm_cm_id=$2, ddcm_updated_at=now() where ddcm_id=$3',
             [product.ddcm_website,result.rows[0].cm_id,product.ddcm_id]);
         });
 
-        newDeniedDomain.forEach(function(product, index) {
+        deniedDomainList.forEach(function(product, index) {
           client.query("INSERT into denied_domain_campaign_master(ddcm_cm_id,ddcm_website,ddcm_status)values ($1,$2,0) RETURNING *",
             [result.rows[0].cm_id,product.ddcm_website]);
         //client.query('update design_product_master set dtm_part_no=$1, dtm_part_name=$2, dtm_qty=$3, dtm_updated_at=now() where dtm_id=$4',[product.dtm_part_no,product.dtm_part_name,product.dtm_qty,result.rows[0].dm_id]);
