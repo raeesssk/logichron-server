@@ -17,7 +17,7 @@ router.get('/view/:dmId', oauth.authorise(), (req, res, next) => {
       console.log("the error is"+err);
       return res.status(500).json({success: false, data: err});
     }
-    const query = client.query("SELECT qm_questions,qm_answers FROM question_master qm left outer join contact_discovery_master cdm on qm.qm_cdm_id=cdm.cdm_id where qm_status=0 and cdm_id=$1",[id]);
+    const query = client.query("SELECT qm_questions,qm_answers,qm_cdm_id FROM question_master qm left outer join contact_discovery_master cdm on qm.qm_cdm_id=cdm.cdm_id where cdm_id=$1",[id]);
     query.on('row', (row) => {
       results.push(row);
 

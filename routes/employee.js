@@ -129,7 +129,7 @@ router.post('/edit/:employeeId', oauth.authorise(), (req, res, next) => {
         console.log("the error is"+err);
         return res.status(500).json({success: false, data: err});
       }
-      var singleInsert = 'update employee_master set emp_name=$1, emp_mobile=$2, emp_address=$3, emp_correspondence_address=$4, emp_aadhar_no=$5, emp_pancard_no=$6, emp_designation=$7, emp_emp_no=$8, emp_email_id=$9, emp_qualification=$10, emp_image, emp_updated_at=now() where emp_id=$12 RETURNING *',
+      var singleInsert = 'update employee_master set emp_name=$1, emp_mobile=$2, emp_address=$3, emp_correspondence_address=$4, emp_aadhar_no=$5, emp_pancard_no=$6, emp_designation=$7, emp_emp_no=$8, emp_email_id=$9, emp_qualification=$10, emp_image=$11, emp_updated_at=now() where emp_id=$12 RETURNING *',
         params = [req.body.emp_name,req.body.emp_mobile,req.body.emp_address,req.body.emp_correspondence_address,req.body.emp_aadhar_no,req.body.emp_pancard_no,req.body.emp_designation,req.body.emp_emp_no,req.body.emp_email_id,req.body.emp_qualification,filenamestore,id];
     client.query(singleInsert, params, function (error, result) {
         results.push(result.rows[0]); // Will contain your inserted rows

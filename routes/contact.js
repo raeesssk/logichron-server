@@ -39,7 +39,7 @@ router.get('/:jobId', oauth.authorise(), (req, res, next) => {
       console.log("the error is"+err);
       return res.status(500).json({success: false, contact: err});
     }
-    const query = client.query("SELECT * from contact_discovery_master jm LEFT OUTER JOIN manager_master mm on jm.dm_mm_id=mm.mm_id where dm_id=$1",[id]);
+    const query = client.query("SELECT * from contact_discovery_master cdm LEFT OUTER JOIN question_master qm on qm.qm_cdm_id=cdm.cdm_id where cdm_id=$1",[id]);
     query.on('row', (row) => {
       results.push(row);
     });
@@ -159,9 +159,9 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
 router.post('/edit/:jobId', oauth.authorise(), (req, res, next) => {
   const results = [];
   const id = req.params.jobId;
-  const answer=req.body.answers;
-  const contact=req.body.contactentry;
-  const ansadd=req.body.answersadd;
+  const answers=req.body.answers;
+  const contact=req.body.contact;
+  const answersadd=req.body.answersadd;
   const remove=req.body.remove;
   pool.connect(function(err, client, done){
     if(err) {
@@ -172,18 +172,18 @@ router.post('/edit/:jobId', oauth.authorise(), (req, res, next) => {
     }
     client.query('BEGIN;');
     
-    var singleInsert = 'update contact_discovery_master set cdm_campaign=$1, cdm_first_name=$2, cdm_last_name=$3, cdm_job_title=$4, cdm_job_level=$5, cdm_dept=$6, cdm_email_id=$7, cdm_mobile=$8, cdm_company_name=$9, cdm_address=$10, cdm_city=$11, cdm_state=$12, cdm_postal_code=$13, cdm_country=$14, cdm_industry=$15, cdm_company_size=$16, cdm_revenue=$17, cdm_asset=$18, cdm_domain=$19, cdm_updated_at=now() where cdm_id=$20 RETURNING *',
-        params = [contact.cdm_campaign_name.cm_campaign_name,contact.cdm_first_name,contact.cdm_last_name,contact.cdm_job_title,contact.cdm_job_level,contact.cdm_dept,contact.cdm_email_id,contact.cdm_mobile,contact.cdm_company_name,contact.cdm_address,contact.cdm_city,contact.cdm_state,contact.cdm_postal_code,contact.cdm_country,contact.cdm_industry,contact.cdm_company_size,contact.cdm_revenue,contact.cdm_asset,contact.cdm_domain,id];
+    var singleInsert = 'update contact_discovery_master set cdm_first_name=$1, cdm_last_name=$2, cdm_job_title=$3, cdm_job_level=$4, cdm_dept=$5, cdm_email_id=$6, cdm_mobile=$7, cdm_company_name=$8, cdm_address=$9, cdm_city=$10, cdm_state=$11, cdm_postal_code=$12, cdm_country=$13, cdm_industry=$14, cdm_company_size=$15, cdm_revenue=$16, cdm_asset=$17, cdm_domain=$18, cdm_updated_at=now() where cdm_id=$19 RETURNING *',
+        params = [contact.cdm_first_name,contact.cdm_last_name,contact.cdm_job_title,contact.cdm_job_level,contact.cdm_dept,contact.cdm_email_id,contact.cdm_mobile,contact.cdm_company_name,contact.cdm_address,contact.cdm_city,contact.cdm_state,contact.cdm_postal_code,contact.cdm_country,contact.cdm_industry,contact.cdm_company_size,contact.cdm_revenue,contact.cdm_asset,contact.cdm_domain,id];
     client.query(singleInsert, params, function (error, result) {
         results.push(result.rows[0]); // Will contain your inserted rows
 
         remove.forEach(function(val,index){
            client.query("delete from question_master where qm_id=$1",[val.qm_id]);
         });
-        answer.forEach(function(product,index){
+        answers.forEach(function(product,index){
           client.query("update question_master set qm_questions=$1,qm_answers=$2 where qm_cdm_id=$3",[product.qm_questions,product.qm_answers,result.rows[0].cdm_id]);
         });
-        ansadd.forEach(function(value,index){
+        answersadd.forEach(function(value,index){
           client.query("INSERT into question_master(qm_questions,qm_answers,qm_cdm_id,qm_status) values($1,$2,$3,0)",[value.qm_questions,value.qm_answers,result.rows[0].cdm_id]);
         });
         
