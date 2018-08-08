@@ -11,7 +11,6 @@ var cors = require('cors');
 
 var oauth = require('./oauth');
 var login = require('./routes/login');
-var customer = require('./routes/customer');
 var expense = require('./routes/expense');
 
 var routes = require('./routes/index');
@@ -27,7 +26,6 @@ var employee = require('./routes/employee');
 var userm = require('./routes/userm');
 var role = require('./routes/role');
 var contact = require('./routes/contact');
-var manager = require('./routes/manager');
 var permission = require('./routes/permission');
 var question = require('./routes/question');
 var campaign= require('./routes/campaign');
@@ -62,7 +60,6 @@ app.use(app.oauth.errorHandler());
 
 // Define Routes Here
 app.use('/login', login);
-app.use('/customer', customer);
 app.use('/expense', expense);
 app.use('/airline', airline);
 app.use('/visa', visa);
@@ -76,7 +73,6 @@ app.use('/employee', employee);
 app.use('/userm', userm);
 app.use('/role', role);
 app.use('/contact', contact);
-app.use('/manager', manager);
 app.use('/permission', permission);
 app.use('/question', question);
 app.use('/campaign', campaign);
