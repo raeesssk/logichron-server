@@ -373,7 +373,7 @@ router.post('/campaign/total', oauth.authorise(), (req, res, next) => {
     const strqry =  "SELECT count(cm.cm_id) as total "+
                     "from campaign_master cm "+
                     "where cm.cm_status=0 "+
-                    "and LOWER(cm_campaign_name||''||cm_title) LIKE LOWER($1);";
+                    "and LOWER(cm_campaign_name||''||cm_title) LIKE LOWER($1); "
 
     const query = client.query(strqry,[str]);
     query.on('row', (row) => {
@@ -404,7 +404,7 @@ router.post('/campaign/limit', oauth.authorise(), (req, res, next) => {
                     "from campaign_master cm "+
                     "where cm.cm_status=0 "+
                     "and LOWER(cm_campaign_name||''||cm_title) LIKE LOWER($1) "+
-                    "order by cm.cm_id desc LIMIT $2 OFFSET $3";
+                    "order by cm.cm_id desc LIMIT $2 OFFSET $3 ";
 
     const query = client.query(strqry,[ str, req.body.number, req.body.begin]);
     query.on('row', (row) => {
@@ -418,6 +418,31 @@ router.post('/campaign/limit', oauth.authorise(), (req, res, next) => {
     done(err);
   });
 });
+
+
+
+router.get('/contact/goal/:campaignId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    const query = client.query("select count(cdm_id) as total from contact_discovery_master where ",);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+    done(err);
+  });
+});
+
 router.get('/Accview/:campaignId', oauth.authorise(), (req, res, next) => {
   const results = [];
   const id=req.params.campaignId;

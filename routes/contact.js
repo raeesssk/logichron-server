@@ -7,9 +7,9 @@ var config = require('../config.js');
 
 var pool = new pg.Pool(config);
 
-router.post('/accountList', oauth.authorise(), (req, res, next) => {
+router.get('/accountList/:campaignId', oauth.authorise(), (req, res, next) => {
   const results = [];
-  console.log(req.body);
+  const id=req.params.campaignId;
   pool.connect(function(err, client, done){
     if(err) {
       done();
@@ -17,7 +17,30 @@ router.post('/accountList', oauth.authorise(), (req, res, next) => {
       console.log("the error is"+err);
       return res.status(500).json({success: false, contact: err});
     }
-    const query = client.query("SELECT * FROM account_master_campaign_master amcm inner join campaign_master cm on amcm.amcm_cm_id=cm.cm_id left outer join suppression_campaign_master scm on scm.scm_cm_id=cm.cm_id where amcm_company=$1 and cm_account_list='Yes' ",[req.body.cdm_company_name]);
+    const query = client.query("SELECT * FROM account_master_campaign_master amcm inner join campaign_master cm on amcm.amcm_cm_id=cm.cm_id left outer join suppression_campaign_master scm on scm.scm_cm_id=cm.cm_id where amcm_cm_id=$1",[id]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
+router.get('/AllDomain/:campaignId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id=req.params.campaignId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, contact: err});
+    }
+    const query = client.query("SELECT * FROM allow_domain_campaign_master adcm inner join campaign_master cm on adcm.adcm_cm_id=cm.cm_id where adcm_cm_id=$1",[id]);
     query.on('row', (row) => {
       results.push(row);
     });
@@ -40,7 +63,7 @@ router.get('/:jobId', oauth.authorise(), (req, res, next) => {
       console.log("the error is"+err);
       return res.status(500).json({success: false, contact: err});
     }
-    const query = client.query("SELECT * from contact_discovery_master cdm LEFT OUTER JOIN question_master qm on qm.qm_cdm_id=cdm.cdm_id where cdm_id=$1",[id]);
+    const query = client.query("SELECT * from contact_discovery_master cdm LEFT OUTER JOIN question_master qm on qm.qm_cdm_id=cdm.cdm_id LEFT OUTER JOIN campaign_master cm on cdm.cdm_cm_id=cm.cm_id where cdm_id=$1",[id]);
     query.on('row', (row) => {
       results.push(row);
     });
@@ -76,9 +99,10 @@ router.get('/question/:jobId', oauth.authorise(), (req, res, next) => {
   });
 });
 
-router.post('/check/accountList', oauth.authorise(), (req, res, next) => {
+router.post('/check/accountList/:campaignId', oauth.authorise(), (req, res, next) => {
   const results = [];
-  console.log(req.body);
+  console.log(req.body.amcm_company);
+  const id=req.params.campaignId;
   pool.connect(function(err, client, done){
     if(err) {
       done();
@@ -86,7 +110,7 @@ router.post('/check/accountList', oauth.authorise(), (req, res, next) => {
       console.log("the error is"+err);
       return res.status(500).json({success: false, data: err});
     }
-    const query = client.query("SELECT * FROM account_master_campaign_master amcm inner join campaign_master cm on amcm.amcm_cm_id=cm.cm_id left outer join suppression_campaign_master scm on scm.scm_cm_id=cm.cm_id where amcm_company=$1",[req.body.cdm_company_name]);
+    const query = client.query("SELECT * FROM account_master_campaign_master amcm inner join campaign_master cm on amcm.amcm_cm_id=cm.cm_id left outer join suppression_campaign_master scm on scm.scm_cm_id=cm.cm_id where amcm_cm_id=$1 and amcm_company=$2",[id,req.body.cdm_company_name]);
     query.on('row', (row) => {
       results.push(row);
     });
@@ -99,9 +123,9 @@ router.post('/check/accountList', oauth.authorise(), (req, res, next) => {
   });
 });
 
-router.post('/check/suppression', oauth.authorise(), (req, res, next) => {
+router.post('/check/suppression/:campaignId', oauth.authorise(), (req, res, next) => {
   const results = [];
-  console.log(req.body);
+  const id=req.params.campaignId;
   pool.connect(function(err, client, done){
     if(err) {
       done();
@@ -109,32 +133,7 @@ router.post('/check/suppression', oauth.authorise(), (req, res, next) => {
       console.log("the error is"+err);
       return res.status(500).json({success: false, data: err});
     }
-    const query = client.query("SELECT * FROM suppression_campaign_master scm inner join campaign_master cm on scm.scm_cm_id=cm.cm_id where scm_company=$1",[req.body.cdm_company_name]);
-    query.on('row', (row) => {
-      console.log(row);
-      results.push(row);
-    });
-    query.on('end', () => {
-      done();
-      // pg.end();
-      return res.json(results);
-    });
-  done(err);
-  });
-});
-
-
-router.post('/check/domain', oauth.authorise(), (req, res, next) => {
-  const results = [];
-  // console.log(req.body);
-  pool.connect(function(err, client, done){
-    if(err) {
-      done();
-      // pg.end();
-      console.log("the error is"+err);
-      return res.status(500).json({success: false, data: err});
-    }
-    const query = client.query("SELECT * FROM denied_domain_campaign_master ddcm inner join campaign_master cm on ddcm.ddcm_cm_id=cm.cm_id where ddcm_website=$1",[req.body.cdm_domain]);
+    const query = client.query("SELECT * FROM suppression_campaign_master scm inner join campaign_master cm on scm.scm_cm_id=cm.cm_id where scm_company=$1 and scm_cm_id=$2",[req.body.cdm_company_name,id]);
     query.on('row', (row) => {
       console.log(row);
       results.push(row);
@@ -148,9 +147,11 @@ router.post('/check/domain', oauth.authorise(), (req, res, next) => {
   });
 });
 
-router.post('/check/AllDomain', oauth.authorise(), (req, res, next) => {
+
+router.post('/check/domain/:campaignId', oauth.authorise(), (req, res, next) => {
   const results = [];
   // console.log(req.body);
+  const id=req.params.campaignId;
   pool.connect(function(err, client, done){
     if(err) {
       done();
@@ -158,7 +159,32 @@ router.post('/check/AllDomain', oauth.authorise(), (req, res, next) => {
       console.log("the error is"+err);
       return res.status(500).json({success: false, data: err});
     }
-    const query = client.query("SELECT * FROM allow_domain_campaign_master adcm inner join campaign_master cm on adcm.adcm_cm_id=cm.cm_id where adcm_website=$1",[req.body.cdm_domain]);
+    const query = client.query("SELECT * FROM denied_domain_campaign_master ddcm inner join campaign_master cm on ddcm.ddcm_cm_id=cm.cm_id where ddcm_website=$1 and ddcm_cm_id=$2",[req.body.cdm_domain,id]);
+    query.on('row', (row) => {
+      console.log(row);
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
+router.post('/check/AllDomain/:campaignId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  // console.log(req.body);
+  const id=req.params.campaignId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    const query = client.query("SELECT * FROM allow_domain_campaign_master adcm inner join campaign_master cm on adcm.adcm_cm_id=cm.cm_id where adcm_website=$1 and adcm_cm_id=$2",[req.body.cdm_domain,id]);
     query.on('row', (row) => {
       console.log(row);
       results.push(row);
@@ -187,9 +213,9 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
     }
     client.query('BEGIN;');
 
-        var singleInsert = "INSERT INTO contact_discovery_master(cdm_campaign,cdm_first_name,cdm_last_name,cdm_job_title,cdm_job_level,cdm_dept,cdm_email_id,cdm_mobile,cdm_company_name,cdm_address,cdm_city,cdm_state,cdm_postal_code,cdm_country,cdm_industry,cdm_company_size,cdm_revenue,cdm_asset,cdm_domain,cdm_status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,0) RETURNING *",
-        params = [contact.cdm_campaign_name.cm_campaign_name,contact.cdm_first_name,contact.cdm_last_name,contact.cdm_job_title,contact.cdm_job_level,contact.cdm_dept,contact.cdm_email_id,contact.cdm_mobile,contact.cdm_company_name,contact.cdm_address,contact.cdm_city,contact.cdm_state,contact.cdm_postal_code,contact.cdm_country,contact.cdm_industry,contact.cdm_company_size,contact.cdm_revenue,contact.cdm_asset,contact.cdm_domain]
-        console.log(params);
+        var singleInsert = "INSERT INTO contact_discovery_master(cdm_cm_id,cdm_first_name,cdm_last_name,cdm_job_title,cdm_job_level,cdm_dept,cdm_email_id,cdm_mobile,cdm_company_name,cdm_address,cdm_city,cdm_state,cdm_postal_code,cdm_country,cdm_industry,cdm_company_size,cdm_revenue,cdm_asset,cdm_domain,cdm_status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,0) RETURNING *",
+        params = [contact.cdm_cm_id.cm_id,contact.cdm_first_name,contact.cdm_last_name,contact.cdm_job_title,contact.cdm_job_level,contact.cdm_dept,contact.cdm_email_id,contact.cdm_mobile,contact.cdm_company_name,contact.cdm_address,contact.cdm_city,contact.cdm_state,contact.cdm_postal_code,contact.cdm_country,contact.cdm_industry,contact.cdm_company_size,contact.cdm_revenue,contact.cdm_asset,contact.cdm_domain]
+       
         client.query(singleInsert, params, function (error, result) {
         results.push(result.rows[0]);// Will contain your inserted rows
         
@@ -286,7 +312,7 @@ router.post('/contact/total', oauth.authorise(), (req, res, next) => {
     const strqry =  "SELECT count(cdm_id) as total "+
                     "from contact_discovery_master "+
                     "where cdm_status=0 "+
-                    "and LOWER(cdm_campaign||''||cdm_first_name||''||cdm_last_name) LIKE LOWER($1);";
+                    "and LOWER(cdm_first_name||''||cdm_last_name) LIKE LOWER($1);";
 
     const query = client.query(strqry,[str]);
     query.on('row', (row) => {
@@ -315,8 +341,9 @@ router.post('/contact/limit', oauth.authorise(), (req, res, next) => {
 
     const strqry =  "SELECT * "+
                     "FROM contact_discovery_master cdm "+
+                    "left outer join campaign_master cm on cdm.cdm_cm_id=cm.cm_id "+
                     "where cdm.cdm_status = 0 "+
-                    "and LOWER(cdm_campaign||''||cdm_first_name||''||cdm_last_name) LIKE LOWER($1) "+
+                    "and LOWER(cdm_first_name||''||cdm_last_name) LIKE LOWER($1) "+
                     "order by cdm.cdm_id desc LIMIT $2 OFFSET $3";
 
     const query = client.query(strqry,[ str, req.body.number, req.body.begin]);
