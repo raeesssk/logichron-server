@@ -423,6 +423,7 @@ router.post('/campaign/limit', oauth.authorise(), (req, res, next) => {
 
 router.get('/contact/goal/:campaignId', oauth.authorise(), (req, res, next) => {
   const results = [];
+  const id=req.params.campaignId;
   pool.connect(function(err, client, done){
     if(err) {
       done();
@@ -430,7 +431,7 @@ router.get('/contact/goal/:campaignId', oauth.authorise(), (req, res, next) => {
       console.log("the error is"+err);
       return res.status(500).json({success: false, data: err});
     }
-    const query = client.query("select count(cdm_id) as total from contact_discovery_master where ",);
+    const query = client.query("select count(cdm_id) as total from contact_discovery_master where cdm_cm_id=$1",[id]);
     query.on('row', (row) => {
       results.push(row);
     });
