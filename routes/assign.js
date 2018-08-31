@@ -119,6 +119,30 @@ router.post('/add/:campaignId', oauth.authorise(), (req, res, next) => {
   });
 });
 
+router.get('/edit', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id=req.params.dmId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    const query = client.query("SELECT * FROM campaign_employee_master cem left outer join campaign_master cm on cem.cem_cm_id=cm.cm_id");
+    query.on('row', (row) => {
+      results.push(row);
+
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
 router.post('/employee/total', oauth.authorise(), (req, res, next) => {
   const results = [];
   pool.connect(function(err, client, done){
