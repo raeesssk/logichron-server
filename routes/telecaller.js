@@ -4,26 +4,21 @@ var oauth = require('../oauth/index');
 var pg = require('pg');
 var path = require('path');
 var config = require('../config.js');
-var encryption = require('../commons/encryption.js');
 
 var pool = new pg.Pool(config);
 
-router.get('/view/:jobId', oauth.authorise(), (req, res, next) => {
+router.get('/', oauth.authorise(), (req, res, next) => {
   const results = [];
-  const id=req.params.jobId;
   pool.connect(function(err, client, done){
     if(err) {
       done();
       // pg.end();
       console.log("the error is"+err);
-      return res.status(500).json({success: false, data: err});
+      return res.status(500).json({success: false, contact: err});
     }
-    const query = client.query("SELECT qm_questions,qm_answers,qm_cdm_id FROM question_master qm left outer join contact_discovery_master cdm on qm.qm_cdm_id=cdm.cdm_id where cdm_id=$1",[id]);
+    const query = client.query("SELECT * FROM contact_discovery_master cdm left outer join campaign_master cm on cdm.cdm_cm_id=cm.cm_id where cdm_status=0");
     query.on('row', (row) => {
-      row.qm_questions=encryption.decrypt(row.qm_questions);
-      row.qm_answers=encryption.decrypt(row.qm_answers);
       results.push(row);
-
     });
     query.on('end', () => {
       done();
