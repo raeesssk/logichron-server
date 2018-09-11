@@ -4,6 +4,7 @@ var oauth = require('../oauth/index');
 var pg = require('pg');
 var path = require('path');
 var config = require('../config.js');
+var roles = require("user-groups-roles");
 
 var pool = new pg.Pool(config);
 
