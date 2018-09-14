@@ -7,7 +7,6 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var cors = require('cors');
-var roles = require("user-groups-roles");
 // var nodemailer = require('nodemailer');
 
 var oauth = require('./oauth');
