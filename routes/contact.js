@@ -8,6 +8,48 @@ var encryption = require('../commons/encryption.js');
 
 var pool = new pg.Pool(config);
 
+router.get('/', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id=req.params.campaignId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, contact: err});
+    }
+    const query = client.query("select * from contact_discovery_master cdm left outer join campaign_master cm on cdm.cdm_cm_id=cm.cm_id where cdm_status=0 order by cdm_id asc");
+    query.on('row', (row) => {
+      row.cdm_mobile=encryption.decrypt(row.cdm_mobile);
+      row.cdm_first_name=encryption.decrypt(row.cdm_first_name);
+      row.cdm_last_name=encryption.decrypt(row.cdm_last_name);
+      row.cdm_job_title=encryption.decrypt(row.cdm_job_title);
+      row.cdm_job_level=encryption.decrypt(row.cdm_job_level);
+      row.cdm_dept=encryption.decrypt(row.cdm_dept);
+      row.cdm_email_id=encryption.decrypt(row.cdm_email_id);
+      row.cdm_company_name=encryption.decrypt(row.cdm_company_name);
+      row.cdm_address=encryption.decrypt(row.cdm_address);
+      row.cdm_city=encryption.decrypt(row.cdm_city);
+      row.cdm_state=encryption.decrypt(row.cdm_state);
+      row.cdm_postal_code=encryption.decrypt(row.cdm_postal_code);
+      row.cdm_country=encryption.decrypt(row.cdm_country);
+      row.cdm_industry=encryption.decrypt(row.cdm_industry);
+      row.cdm_company_size=encryption.decrypt(row.cdm_company_size);
+      row.cdm_revenue=encryption.decrypt(row.cdm_revenue);
+      row.cdm_asset=encryption.decrypt(row.cdm_asset);
+      row.cdm_domain=encryption.decrypt(row.cdm_domain);
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
+
 router.get('/accountList/:campaignId', oauth.authorise(), (req, res, next) => {
   const results = [];
   const id=req.params.campaignId;
@@ -330,9 +372,10 @@ router.post('/contact/total', oauth.authorise(), (req, res, next) => {
     const strqry =  "SELECT count(cdm_id) as total "+
                     "from contact_discovery_master "+
                     "where cdm_status=0 "+
-                    "and LOWER(cdm_first_name||''||cdm_last_name) LIKE LOWER($1);";
+                    "and LOWER(cdm_first_name||''||cdm_last_name) LIKE LOWER($1) "+
+                    "and date(cdm_created_at)::date BETWEEN $2 and $3; "
 
-    const query = client.query(strqry,[str]);
+    const query = client.query(strqry,[str,req.body.cdm_from_date,req.body.cdm_to_date]);
     query.on('row', (row) => {
       results.push(row);
     });
@@ -362,9 +405,10 @@ router.post('/contact/limit', oauth.authorise(), (req, res, next) => {
                     "left outer join campaign_master cm on cdm.cdm_cm_id=cm.cm_id "+
                     "where cdm.cdm_status = 0 "+
                     "and LOWER(cm_campaign_name||''||cdm_first_name||''||cdm_last_name) LIKE LOWER($1) "+
-                    "order by cdm.cdm_id desc LIMIT $2 OFFSET $3";
+                    "and date(cdm_created_at)::date BETWEEN $2 and $3 "+
+                    "order by cdm.cdm_id desc LIMIT $4 OFFSET $5";
 
-    const query = client.query(strqry,[ str, req.body.number, req.body.begin]);
+    const query = client.query(strqry,[ str, req.body.cdm_from_date, req.body.cdm_to_date, req.body.number, req.body.begin]);
     query.on('row', (row) => {
       row.cdm_mobile=encryption.decrypt(row.cdm_mobile);
       row.cdm_first_name=encryption.decrypt(row.cdm_first_name);

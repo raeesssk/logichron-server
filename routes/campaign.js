@@ -7,6 +7,30 @@ var config = require('../config.js');
 
 var pool = new pg.Pool(config);
 
+router.get('/', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    // SQL Query > Select Data
+    const query = client.query('SELECT * FROM campaign_master cm left outer join account_master_campaign_master amcm on amcm.amcm_cm_id=cm.cm_id left outer join suppression_campaign_master scm on scm.scm_cm_id=cm.cm_id left outer join allow_domain_campaign_master adcm on adcm.adcm_cm_id=cm.cm_id left outer join custom_question_campaign_master cqcm on cmcm_cm_id=cm.cm_id left outer join denied_domain_campaign_master ddcm on ddcm.ddcm_cm_id=cm.cm_id where cm_status=0 order by cm_id asc');
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err); 
+  });
+});
+
+
 router.get('/:campaignId', oauth.authorise(), (req, res, next) => {
   const results = [];
   const id = req.params.campaignId;
@@ -373,9 +397,10 @@ router.post('/campaign/total', oauth.authorise(), (req, res, next) => {
     const strqry =  "SELECT count(cm.cm_id) as total "+
                     "from campaign_master cm "+
                     "where cm.cm_status=0 "+
-                    "and LOWER(cm_campaign_name||''||cm_title) LIKE LOWER($1); "
+                    "and LOWER(cm_campaign_name||''||cm_title) LIKE LOWER($1) "+
+                    "and cm_date BETWEEN $2 and $3; "
 
-    const query = client.query(strqry,[str]);
+    const query = client.query(strqry,[str,req.body.cm_from_date,req.body.cm_to_date]);
     query.on('row', (row) => {
       results.push(row);
     });
@@ -404,9 +429,10 @@ router.post('/campaign/limit', oauth.authorise(), (req, res, next) => {
                     "from campaign_master cm "+
                     "where cm.cm_status=0 "+
                     "and LOWER(cm_campaign_name||''||cm_title) LIKE LOWER($1) "+
-                    "order by cm.cm_id desc LIMIT $2 OFFSET $3 ";
+                    "and cm_date BETWEEN $2 and $3 "+
+                    "order by cm.cm_id desc LIMIT $4 OFFSET $5 ";
 
-    const query = client.query(strqry,[ str, req.body.number, req.body.begin]);
+    const query = client.query(strqry,[ str, req.body.cm_from_date, req.body.cm_to_date, req.body.number, req.body.begin]);
     query.on('row', (row) => {
       results.push(row);
     });
