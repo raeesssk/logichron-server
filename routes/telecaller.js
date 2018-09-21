@@ -5,6 +5,8 @@ var pg = require('pg');
 var path = require('path');
 var config = require('../config.js');
 var encryption = require('../commons/encryption.js');
+var multer = require('multer');
+var filenamestore = "";
 
 var pool = new pg.Pool(config);
 
@@ -181,6 +183,138 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
     });
 
     done(err);
+  });
+});
+
+
+router.post('/audio/:jobId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id = req.params.jobId;
+  var filenamestore = "";
+  var Storage = multer.diskStorage({
+      destination: function (req, file, callback) {
+          // callback(null, "./images");
+            callback(null, '../logichron/resources/audio');
+            
+      },
+      filename: function (req, file, callback) {
+          var fi = file.fieldname + "_" + Date.now() + "_" + file.originalname;
+          filenamestore = "../logichron/resources/audio/"+fi;
+          console.log(filenamestore);
+          callback(null, fi);
+      }
+  });
+
+  var upload = multer({ storage: Storage }).array("audioUploader",3); 
+  
+  upload(req, res, function (err) { 
+    if (err) { 
+        return res.end("Something went wrong!"+err); 
+    } 
+     pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    var singleInsert = "INSERT INTO contact_discovery_audio_master(cdam_cdm_id,cdam_audio) values($1,$2) RETURNING *",
+        params = [id,filenamestore];
+        console.log(params);
+    client.query(singleInsert, params, function (error, result) {
+
+        results.push(result.rows[0]); // Will contain your inserted rows
+        done();
+        return res.json(results);
+    });
+
+    done(err);
+  });
+});
+  
+});
+
+router.get('/getaudio/:jobId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id = req.params.jobId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, contact: err});
+    }
+    const query = client.query("SELECT * FROM contact_discovery_audio_master cdam left outer join contact_discovery_master cdm on cdam.cdam_cdm_id=cdm.cdm_id where cdam_cdm_id=$1",[id]);
+    query.on('row', (row) => {
+
+      row.cdm_mobile=encryption.decrypt(row.cdm_mobile);
+      row.cdm_first_name=encryption.decrypt(row.cdm_first_name);
+      row.cdm_last_name=encryption.decrypt(row.cdm_last_name);
+      row.cdm_job_title=encryption.decrypt(row.cdm_job_title);
+      row.cdm_job_level=encryption.decrypt(row.cdm_job_level);
+      row.cdm_dept=encryption.decrypt(row.cdm_dept);
+      row.cdm_email_id=encryption.decrypt(row.cdm_email_id);
+      row.cdm_company_name=encryption.decrypt(row.cdm_company_name);
+      row.cdm_address=encryption.decrypt(row.cdm_address);
+      row.cdm_city=encryption.decrypt(row.cdm_city);
+      row.cdm_state=encryption.decrypt(row.cdm_state);
+      row.cdm_postal_code=encryption.decrypt(row.cdm_postal_code);
+      row.cdm_country=encryption.decrypt(row.cdm_country);
+      row.cdm_industry=encryption.decrypt(row.cdm_industry);
+      row.cdm_company_size=encryption.decrypt(row.cdm_company_size);
+      row.cdm_revenue=encryption.decrypt(row.cdm_revenue);
+      row.cdm_asset=encryption.decrypt(row.cdm_asset);
+      row.cdm_domain=encryption.decrypt(row.cdm_domain);
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
+router.get('/getfollowups/:jobId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id = req.params.jobId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, contact: err});
+    }
+    const query = client.query("SELECT * FROM followup_master fm left outer join contact_discovery_master cdm on fm.fm_cdm_id=cdm.cdm_id where fm_cdm_id=$1",[id]);
+    query.on('row', (row) => {
+
+      row.cdm_mobile=encryption.decrypt(row.cdm_mobile);
+      row.cdm_first_name=encryption.decrypt(row.cdm_first_name);
+      row.cdm_last_name=encryption.decrypt(row.cdm_last_name);
+      row.cdm_job_title=encryption.decrypt(row.cdm_job_title);
+      row.cdm_job_level=encryption.decrypt(row.cdm_job_level);
+      row.cdm_dept=encryption.decrypt(row.cdm_dept);
+      row.cdm_email_id=encryption.decrypt(row.cdm_email_id);
+      row.cdm_company_name=encryption.decrypt(row.cdm_company_name);
+      row.cdm_address=encryption.decrypt(row.cdm_address);
+      row.cdm_city=encryption.decrypt(row.cdm_city);
+      row.cdm_state=encryption.decrypt(row.cdm_state);
+      row.cdm_postal_code=encryption.decrypt(row.cdm_postal_code);
+      row.cdm_country=encryption.decrypt(row.cdm_country);
+      row.cdm_industry=encryption.decrypt(row.cdm_industry);
+      row.cdm_company_size=encryption.decrypt(row.cdm_company_size);
+      row.cdm_revenue=encryption.decrypt(row.cdm_revenue);
+      row.cdm_asset=encryption.decrypt(row.cdm_asset);
+      row.cdm_domain=encryption.decrypt(row.cdm_domain);
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
   });
 });
 

@@ -145,7 +145,39 @@ router.post('/edit/:roleId', oauth.authorise(), (req, res, next) => {
     client.query(singleInsert, params, function (error, result) {
         results.push(result.rows[0]); // Will contain your inserted rows
         permission.forEach(function(value, key){
-          client.query("update role_permission_master set rpm_add=$1, rpm_edit=$2, rpm_delete=$3, rpm_list=$4 where rpm_rm_id=$5 RETURNING *",[value.pm_add1,value.pm_edit1,value.pm_delete1,value.pm_list1,result.rows[0].rm_id])
+          
+          if (value.rpm_add === true){
+                value.rpm_add=1;
+            }
+            else{
+                value.rpm_add=0;
+                
+            }
+            if (value.rpm_edit === true){
+                value.rpm_edit=1;
+            }
+            else{
+                
+                value.rpm_edit=0; 
+                
+            }
+
+            if (value.rpm_delete === true){
+                value.rpm_delete=1;
+            }
+            else{
+                value.rpm_delete=0; 
+                
+            }
+            if (value.rpm_list === true){
+                value.rpm_list=1;
+            }
+            else{
+                value.rpm_list=0; 
+                
+            }
+            console.log(value);
+           client.query("update role_permission_master set rpm_add=$1, rpm_edit=$2, rpm_delete=$3, rpm_list=$4 where rpm_rm_id=$5",[value.rpm_add,value.rpm_edit,value.rpm_delete,value.rpm_list,result.rows[0].rm_id])
         });
         client.query('COMMIT;');
         done();
@@ -193,9 +225,9 @@ router.post('/role/total', oauth.authorise(), (req, res, next) => {
     const str = "%"+req.body.search+"%";
 
     console.log(str);
-    const strqry =  "SELECT count(rm_id) as total "+
-                    "from role_master "+
-                    "where rm_status=0 "+
+    const strqry =  "SELECT count(rm.rm_id) as total "+
+                    "from role_master rm "+
+                    "where rm.rm_status=0 "+
                     "and LOWER(rm_name||''||rm_description) LIKE LOWER($1);";
 
     const query = client.query(strqry,[str]);

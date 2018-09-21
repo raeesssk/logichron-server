@@ -292,6 +292,40 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
   });
 });
 
+router.post('/import', (req, res, next) => {
+  const results = [];
+  const id = req.params.jobId;
+  console.log(req.body);
+  const contact = req.body;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, contact: err});
+    }
+    client.query('BEGIN;');
+        contact.forEach(function(val,key){
+          var singleInsert = "INSERT INTO contact_discovery_master(cdm_mobile,cdm_first_name,cdm_last_name,cdm_job_title,cdm_job_level,cdm_dept,cdm_email_id,cdm_company_name,cdm_address,cdm_postal_code,cdm_city,cdm_state,cdm_country,cdm_industry,cdm_company_size,cdm_revenue,cdm_asset,cdm_domain,call_status,cdm_status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,0) RETURNING *",
+        params = [encryption.encrypt(val.no),encryption.encrypt(val.First_Name),encryption.encrypt(val.Last_Name),encryption.encrypt(val.Job_Title),encryption.encrypt(val.Job_Level),encryption.encrypt(val.Department),encryption.encrypt(val.Email_Id),encryption.encrypt(val.Company_Name),encryption.encrypt(val.Address),encryption.encrypt(val.postal_code),encryption.encrypt(val.City),encryption.encrypt(val.State),encryption.encrypt(val.Countryt),encryption.encrypt(val.Industry),encryption.encrypt(val.Company_Size),encryption.encrypt(val.Revenue),encryption.encrypt(val.Asset),encryption.encrypt(val.Domain),val.Status]
+        
+        client.query(singleInsert, params, function (error, result) {
+        results.push(result.rows[0]);// Will contain your inserted rows
+          
+          /*client.query('update contact_discovery_master set cdm_status=1, cdm_updated_at=now() where cdm_id=$1 RETURNING *',[val.cdm_id])
+        */
+      });
+          client.query('COMMIT;');
+        done();
+        return res.end("Successfully.");
+    });
+        
+       
+        
+    done(err);
+  });
+});
+
 router.post('/edit/:jobId', oauth.authorise(), (req, res, next) => {
   const results = [];
   const id = req.params.jobId;

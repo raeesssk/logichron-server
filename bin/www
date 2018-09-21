@@ -7,6 +7,7 @@
 var app = require('../app');
 var debug = require('debug')('logichron-server:server');
 var http = require('http');
+var siofu = require('socketio-file-upload');
 var socket= require('socket.io');
 
 /**
@@ -15,7 +16,7 @@ var socket= require('socket.io');
 
 var port = normalizePort(process.env.PORT || '3111');
 app.set('port', port);
-
+app.use(siofu.router);
 /**
  * Create HTTP server.
  */
@@ -34,6 +35,26 @@ var io = socket(server);
 
 io.on('connection', function(socket){
   console.log(socket.id);
+  var uploader = new siofu();
+    // uploader.dir = "../logichron/resources/audio/";
+    uploader.listen(socket);
+    
+    /*uploader.on('progress', function(event) {
+    console.log(event.file.bytesLoaded / event.file.size)
+    socket.emit('upload.progress', {
+      percentage:(event.file.bytesLoaded / event.file.size) * 100
+      })
+    });*/
+    // Do something when a file is saved:
+    uploader.on("saved", function(event){
+        console.log(event.file);
+    });
+ 
+    // Error handler:
+    uploader.on("error", function(event){
+        console.log("Error from uploader", event);
+    });
+
   socket.on('status',function(data){
     io.sockets.emit('status',data);
   });

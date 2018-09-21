@@ -77,9 +77,7 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
     if (err) { 
         return res.end("Something went wrong!"+err); 
     } 
-     
-  });
-  pool.connect(function(err, client, done){
+     pool.connect(function(err, client, done){
     if(err) {
       done();
       // pg.end();
@@ -98,6 +96,8 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
 
     done(err);
   });
+  });
+  
 });
 
 
