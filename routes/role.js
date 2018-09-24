@@ -150,24 +150,20 @@ router.post('/edit/:roleId', oauth.authorise(), (req, res, next) => {
                 value.rpm_add=1;
             }
             else{
-                value.rpm_add=0;
-                
+                value.rpm_add=0; 
             }
             if (value.rpm_edit === true){
                 value.rpm_edit=1;
             }
-            else{
-                
-                value.rpm_edit=0; 
-                
+            else{ 
+                value.rpm_edit=0;  
             }
 
             if (value.rpm_delete === true){
                 value.rpm_delete=1;
             }
             else{
-                value.rpm_delete=0; 
-                
+                value.rpm_delete=0;  
             }
             if (value.rpm_list === true){
                 value.rpm_list=1;
@@ -176,8 +172,7 @@ router.post('/edit/:roleId', oauth.authorise(), (req, res, next) => {
                 value.rpm_list=0; 
                 
             }
-            console.log(value);
-           client.query("update role_permission_master set rpm_add=$1, rpm_edit=$2, rpm_delete=$3, rpm_list=$4 where rpm_rm_id=$5",[value.rpm_add,value.rpm_edit,value.rpm_delete,value.rpm_list,result.rows[0].rm_id])
+           client.query("update role_permission_master set rpm_add=$1, rpm_edit=$2, rpm_delete=$3, rpm_list=$4 where rpm_rm_id=$5 and rpm_pm_id=$6",[value.rpm_add,value.rpm_edit,value.rpm_delete,value.rpm_list,result.rows[0].rm_id,value.rpm_pm_id])
         });
         client.query('COMMIT;');
         done();
