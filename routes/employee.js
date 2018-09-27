@@ -66,7 +66,7 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
       },
       filename: function (req, file, callback) {
           var fi = file.fieldname + "_" + Date.now() + "_" + file.originalname;
-          filenamestore = "../logichron/resources/images-new"+fi;
+          filenamestore = "../logichron/resources/images-new/"+fi;
           callback(null, fi);
       }
   });
@@ -117,7 +117,7 @@ router.post('/edit/:employeeId', oauth.authorise(), (req, res, next) => {
       }
   });
 
-  var upload = multer({ storage: Storage }).array("emp_image"); 
+  var upload = multer({ storage: Storage }).array("imgUploader"); 
 
   upload(req, res, function (err) { 
     if (err) { 
@@ -131,6 +131,7 @@ router.post('/edit/:employeeId', oauth.authorise(), (req, res, next) => {
       }
       var singleInsert = 'update employee_master set emp_name=$1, emp_mobile=$2, emp_address=$3, emp_correspondence_address=$4, emp_aadhar_no=$5, emp_pancard_no=$6, emp_designation=$7, emp_emp_no=$8, emp_email_id=$9, emp_qualification=$10, emp_image=$11, emp_updated_at=now() where emp_id=$12 RETURNING *',
         params = [req.body.emp_name,req.body.emp_mobile,req.body.emp_address,req.body.emp_correspondence_address,req.body.emp_aadhar_no,req.body.emp_pancard_no,req.body.emp_designation,req.body.emp_emp_no,req.body.emp_email_id,req.body.emp_qualification,filenamestore,id];
+    console.log(params);
     client.query(singleInsert, params, function (error, result) {
         results.push(result.rows[0]); // Will contain your inserted rows
           done();
@@ -255,6 +256,30 @@ router.post('/typeahead/search', oauth.authorise(), (req, res, next) => {
       return res.json(results);
     });
     done(err);
+  });
+});
+
+router.get('/view/:employeeId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id=req.params.employeeId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    const query = client.query("SELECT * FROM employee_master  where emp_id=$1",[id]);
+    query.on('row', (row) => {
+      results.push(row);
+
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
   });
 });
 module.exports = router;
