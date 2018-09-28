@@ -56,11 +56,35 @@ router.get('/campaign/view/:campaignId', oauth.authorise(), (req, res, next) => 
   });
 });
 
-router.post('/assign/:jobId', oauth.authorise(), (req, res, next) => {
+router.get('/check/emp/:jobId', oauth.authorise(), (req, res, next) => {
   const results = [];
-  const id = req.params.jobId;
+  const id=req.params.jobId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    const query = client.query("SELECT * FROM employee_contact_master where ecm_cdm_id=$1",[id]);
+    query.on('row', (row) => {
+      results.push(row);
+
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
+router.post('/assign/:employeeId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id = req.params.employeeId;
   console.log(req.body);
-  const contact = req.body;
+  const newcontactdiscoveryList = req.body;
   pool.connect(function(err, client, done){
     if(err) {
       done();
@@ -69,8 +93,8 @@ router.post('/assign/:jobId', oauth.authorise(), (req, res, next) => {
       return res.status(500).json({success: false, contact: err});
     }
     client.query('BEGIN;');
-        contact.forEach(function(val,key){
-          var singleInsert = "INSERT INTO employee_contact_master(ecm_cdm_id,ecm_emp_id) VALUES ($1,$2) RETURNING *",
+        newcontactdiscoveryList.forEach(function(val,key){
+          var singleInsert = 'INSERT INTO employee_contact_master(ecm_cdm_id,ecm_emp_id) VALUES ($1,$2) RETURNING *',
           params = [val.cdm_id,id]
           client.query(singleInsert, params, function (error, result) {
           results.push(result.rows[0]);// Will contain your inserted rows
@@ -78,6 +102,41 @@ router.post('/assign/:jobId', oauth.authorise(), (req, res, next) => {
           /*client.query('update contact_discovery_master set cdm_status=1, cdm_updated_at=now() where cdm_id=$1 RETURNING *',[val.cdm_id])
         */
       });
+    
+          client.query('COMMIT;');
+        done();
+        return res.end("Successfully.");
+    
+      });  
+       
+        
+    done(err);
+  });
+});
+
+router.post('/delete/:jobId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id = req.params.jobId;
+  console.log(req.body);
+  const remove = req.body;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, contact: err});
+    }
+    client.query('BEGIN;');
+        remove.forEach(function(val,key){
+          var singleInsert = "delete from employee_contact_master where ecm_cdm_id=$1";
+          params = [id]
+          client.query(singleInsert, params, function (error, result) {
+          results.push(result.rows[0]);// Will contain your inserted rows
+          
+          /*client.query('update contact_discovery_master set cdm_status=1, cdm_updated_at=now() where cdm_id=$1 RETURNING *',[val.cdm_id])
+        */
+      });
+
           client.query('COMMIT;');
         done();
         return res.end("Successfully.");
@@ -88,6 +147,7 @@ router.post('/assign/:jobId', oauth.authorise(), (req, res, next) => {
     done(err);
   });
 });
+
 
 router.post('/edit/:campaignId', oauth.authorise(), (req, res, next) => {
   const results = [];

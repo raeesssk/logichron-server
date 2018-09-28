@@ -19,7 +19,7 @@ router.get('/', oauth.authorise(), (req, res, next) => {
       console.log("the error is"+err);
       return res.status(500).json({success: false, contact: err});
     }
-    const query = client.query("SELECT * FROM contact_discovery_master cdm left outer join campaign_master cm on cdm.cdm_cm_id=cm.cm_id where cdm_status=0 and call_status='open' ORDER BY cdm_id ASC LIMIT 1");
+    const query = client.query("SELECT * FROM contact_discovery_master cdm left outer join campaign_master cm on cdm.cdm_cm_id=cm.cm_id left outer join followup_master fm on fm.fm_cdm_id = cdm.cdm_id where cdm_status=0 and call_status='open' ORDER BY cdm_id ASC LIMIT 1");
     query.on('row', (row) => {
       row.cdm_mobile=encryption.decrypt(row.cdm_mobile);
       row.cdm_first_name=encryption.decrypt(row.cdm_first_name);
@@ -60,7 +60,7 @@ router.get('/preque/:campaignId', oauth.authorise(), (req, res, next) => {
       console.log("the error is"+err);
       return res.status(500).json({success: false, contact: err});
     }
-    const query = client.query("SELECT * FROM contact_discovery_master cdm left outer join campaign_master cm on cdm.cdm_cm_id=cm.cm_id where cdm_cm_id=$1 and call_status='Lead' ORDER BY cdm_id ASC",[id]);
+    const query = client.query("SELECT * FROM contact_discovery_master cdm left outer join campaign_master cm on cdm.cdm_cm_id=cm.cm_id where cdm_cm_id=$1 and call_status='Lead' or call_status='Disqualify' ORDER BY call_status Desc",[id]);
     query.on('row', (row) => {
       row.cdm_mobile=encryption.decrypt(row.cdm_mobile);
       row.cdm_first_name=encryption.decrypt(row.cdm_first_name);
