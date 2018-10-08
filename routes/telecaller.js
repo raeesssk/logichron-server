@@ -194,7 +194,7 @@ router.post('/audio/:jobId', oauth.authorise(), (req, res, next) => {
   var Storage = multer.diskStorage({
       destination: function (req, file, callback) {
           // callback(null, "./images");
-            callback(null, '../logichron/resources/audio');
+            callback(null, '../nginx/html/logichron/resources/audio');
             
       },
       filename: function (req, file, callback) {
