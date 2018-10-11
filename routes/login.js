@@ -9,29 +9,29 @@ var multer = require('multer');
 
 var pool = new pg.Pool(config);
 
-router.get('/', oauth.authorise(), (req, res, next) => {
-  const results = [];
-  pool.connect(function(err, client, done){
-    if(err) {
-      done();
-      done(err);
-      console.log("the error is"+err);
-      return res.status(500).json({success: false, data: err});
-    }
-    // SQL Query > Select Data
-    const query = client.query('SELECT username FROM users');
-    // Stream results back one row at a time
-    query.on('row', (row) => {
-      results.push(row);
-    });
-    // After all data is returned, close connection and return results
-    query.on('end', () => {
-      done();
-      return res.json(results);
-    });
-    done(err);
-  });
-});
+// router.get('/', oauth.authorise(), (req, res, next) => {
+//   const results = [];
+//   pool.connect(function(err, client, done){
+//     if(err) {
+//       done();
+//       done(err);
+//       console.log("the error is"+err);
+//       return res.status(500).json({success: false, data: err});
+//     }
+//     // SQL Query > Select Data
+//     const query = client.query('SELECT username FROM users');
+//     // Stream results back one row at a time
+//     query.on('row', (row) => {
+//       results.push(row);
+//     });
+//     // After all data is returned, close connection and return results
+//     query.on('end', () => {
+//       done();
+//       return res.json(results);
+//     });
+//     done(err);
+//   });
+// });
 
 router.post('/changepassword', oauth.authorise(), (req, res, next) => {
   const results = [];
