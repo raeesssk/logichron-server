@@ -28,17 +28,17 @@ router.post('/', function(req, res, next) {
         port: 465,
         secure: true, // secure:true for port 465, secure:false for port 587
         auth: {
-          user: 'itzzaid92@gmail.com',
-          pass: '8446018692'
+          user: '3commastech@gmail.com',
+          pass: 'abcd@1237#'
         }
       });
       let mailOptions = {
         to: req.body.email,
-        from: 'itzzaid92@gmail.com',
+        from: '3commastech@gmail.com',
         subject: 'Logichron Services LLP Password Reset',
         text: 'You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
           'Please click on the following link, or paste this into your browser to complete the process:\n\n' +
-          'http://' + 'localhost' + '/logichron/reset.html?token=' + token + '\n\n' +
+          'http://' + 'unitech.3commastechnologies.com' + '/logichron/reset.html?token=' + token + '\n\n' +
           'If you did not request this, please ignore this email and your password will remain unchanged.\n'
       };
        transporter.sendMail(mailOptions, (error, info) => {

@@ -14,8 +14,9 @@ router.post('/', oauth.authorise(), (req, res, next) => {
 
     var filename = yyyy +"-"+ (mm[1]?mm:"0"+mm[0]) +"-"+ (dd[1]?dd:"0"+dd[0]);
     var filenametest = filename+".sql";
-    var filepath = "D:/zeartech/backup/"+filename+".sql";
-    cmd.get('C:/"Program Files"/PostgreSQL/9.6/bin/pg_dump.exe --dbname=postgresql://postgres:zeartech@localhost:5432/arabia > ../backup/'+filename+'.sql --role postgres --format=c --blobs --encoding SQL_ASCII',
+    var filepath = "/usr/share/logichron-server/backup/"+filename+".sql";
+    // var filepath = "D:/zeartech/backup/"+filename+".sql";
+    cmd.get("pg_dump --dbname=postgresql://postgres:zeartech@localhost:5432/logichron > backup/"+filename+".sql --role postgres --format=c --blobs --encoding SQL_ASCII",
     function(err, data, stderr){
         if (!err) {
 	        	let transporter = nodemailer.createTransport({
@@ -23,16 +24,16 @@ router.post('/', oauth.authorise(), (req, res, next) => {
 			      port: 465,
 			      secure: true, // secure:true for port 465, secure:false for port 587
 			      auth: {
-			          user: 'raees.shaikh241@gmail.com',
-			          pass: 'a1b2c3d4$'
+			          user: '3commastech@gmail.com',
+			          pass: 'abcd@1237#'
 			      }
 			  });
 
 	        // setup email data with unicode symbols
 	        let mailOptions = {
-	            from: '"3 Commas Technologies" <raees.shaikh241@gmail.com>', // sender address
+	            from: '"3 Commas Technologies" <3commastech@gmail.com>', // sender address
 	            to: 'raees@3commastechnologies.com',
-	            subject: 'backup database file of Arabia Tours and Travels', // Subject line
+	            subject: 'backup database file of Logichron', // Subject line
 	            text: 'Hi please find the attachments', // plain text body
 	            // html: req.body.message // html body
 	            attachments: [
