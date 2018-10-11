@@ -10,7 +10,7 @@ var filenamestore = "";
 
 var pool = new pg.Pool(config);
 
-router.get('/', oauth.authorise(), (req, res, next) => {
+router.post('/', oauth.authorise(), (req, res, next) => {
   const results = [];
   pool.connect(function(err, client, done){
     if(err) {
@@ -19,7 +19,7 @@ router.get('/', oauth.authorise(), (req, res, next) => {
       console.log("the error is"+err);
       return res.status(500).json({success: false, contact: err});
     }
-    const query = client.query("SELECT * FROM contact_discovery_master cdm left outer join campaign_master cm on cdm.cdm_cm_id=cm.cm_id left outer join followup_master fm on fm.fm_cdm_id = cdm.cdm_id where cdm_status=0 and call_status='open' ORDER BY cdm_id ASC LIMIT 1");
+    const query = client.query("SELECT * FROM contact_discovery_master cdm inner join users us on cdm.cdm_userid=us.id left outer join campaign_master cm on cdm.cdm_cm_id=cm.cm_id left outer join followup_master fm on fm.fm_cdm_id = cdm.cdm_id where cdm_status=0 and call_status='open' and cdm_userid=$1 ORDER BY cdm_id ASC LIMIT 1",[req.body.userid]);
     query.on('row', (row) => {
       row.cdm_mobile=encryption.decrypt(row.cdm_mobile);
       row.cdm_first_name=encryption.decrypt(row.cdm_first_name);
@@ -169,8 +169,8 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
       return res.status(500).json({success: false, data: err});
     }
     client.query('BEGIN;');
-    var singleInsert = "INSERT INTO followup_master(fm_date,fm_comment) values($1,$2) RETURNING *",
-        params = [follow.fm_date,follow.fm_comment]
+    var singleInsert = "INSERT INTO followup_master(fm_date,fm_comment,fm_userid) values($1,$2,$3) RETURNING *",
+        params = [follow.fm_date,follow.fm_comment,follow.userid]
     client.query(singleInsert, params, function (error, result) {
         results.push(result.rows[0]); // Will contain your inserted rows
 
@@ -194,6 +194,7 @@ router.post('/audio/:jobId', oauth.authorise(), (req, res, next) => {
   var Storage = multer.diskStorage({
       destination: function (req, file, callback) {
           // callback(null, "./images");
+            // callback(null, '../logichron/resources/audio');
             callback(null, '../nginx/html/logichron/resources/audio');
             
       },
@@ -218,8 +219,8 @@ router.post('/audio/:jobId', oauth.authorise(), (req, res, next) => {
       console.log("the error is"+err);
       return res.status(500).json({success: false, data: err});
     }
-    var singleInsert = "INSERT INTO contact_discovery_audio_master(cdam_cdm_id,cdam_audio) values($1,$2) RETURNING *",
-        params = [id,filenamestore];
+    var singleInsert = "INSERT INTO contact_discovery_audio_master(cdam_cdm_id,cdam_audio,cdam_userid) values($1,$2,$3) RETURNING *",
+        params = [id,filenamestore,req.body.userid];
         console.log(params);
     client.query(singleInsert, params, function (error, result) {
 
@@ -341,4 +342,34 @@ router.get('/:jobId', oauth.authorise(), (req, res, next) => {
   });
 });
 
+router.post('/typeahead/search', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    const str = "%"+req.body.search+"%";
+    // SQL Query > Select Data
+
+    const strqry =  "SELECT * "+
+                    "FROM campaign_master cm "+
+                    "where cm.cm_status = 0 "+
+                    "and LOWER(cm_campaign_name||' '||cm_title) LIKE LOWER($1) "+
+                    "order by cm.cm_id desc LIMIT 10";
+
+    const query = client.query(strqry,[str]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+    done(err);
+  });
+});
 module.exports = router;

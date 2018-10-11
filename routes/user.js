@@ -29,6 +29,28 @@ router.get('/', oauth.authorise(), (req, res, next) => {
   });
 });
 
+router.post('/forgot', (req, res, next) => {
+  const results = [];
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    const query = client.query("SELECT username FROM users where username=$1",[req.body.username]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
 router.get('/:userId', oauth.authorise(), (req, res, next) => {
   const results = [];
   const id = req.params.userId;
