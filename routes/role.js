@@ -37,7 +37,7 @@ router.get('/', oauth.authorise(), (req, res, next) => {
       console.log("the error is"+err);
       return res.status(500).json({success: false, data: err});
     }
-    const query = client.query("SELECT pm_id,pm_name,pm_status,pm_created_at,pm_updated_at FROM permission_master where pm_status=0 order by pm_id asc");
+    const query = client.query("SELECT * FROM permission_master");
     query.on('row', (row) => {
       results.push(row);
     });
@@ -169,10 +169,15 @@ router.post('/edit/:roleId', oauth.authorise(), (req, res, next) => {
         params = [role.rm_name,role.rm_description,id];
     client.query(singleInsert, params, function (error, result) {
         results.push(result.rows[0]); // Will contain your inserted rows
-        permission.forEach(function(value, key){
-          
-           client.query("update role_permission_master set rpm_add=$1, rpm_edit=$2, rpm_delete=$3, rpm_list=$4 where rpm_rm_id=$5 and rpm_pm_id=$6",[value.rpm_add,value.rpm_edit,value.rpm_delete,value.rpm_list,result.rows[0].rm_id,value.rpm_pm_id])
+        remove.forEach(function(product, index) {
+          client.query('delete from public.role_permission_master where rpm_pm_id=$1',
+            [product.pm_id]);
         });
+        permission.forEach(function(value, key){
+          client.query('INSERT into role_permission_master(rpm_rm_id,rpm_pm_id,rpm_psm_id) values($1,$2,$3) RETURNING *',
+            [result.rows[0].rm_id,value.pm_id,value.psm_id]);
+        });
+
         client.query('COMMIT;');
         done();
         return res.json(results);
