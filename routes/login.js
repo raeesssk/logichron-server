@@ -9,29 +9,30 @@ var multer = require('multer');
 
 var pool = new pg.Pool(config);
 
-// router.get('/', oauth.authorise(), (req, res, next) => {
-//   const results = [];
-//   pool.connect(function(err, client, done){
-//     if(err) {
-//       done();
-//       done(err);
-//       console.log("the error is"+err);
-//       return res.status(500).json({success: false, data: err});
-//     }
-//     // SQL Query > Select Data
-//     const query = client.query('SELECT username FROM users');
-//     // Stream results back one row at a time
-//     query.on('row', (row) => {
-//       results.push(row);
-//     });
-//     // After all data is returned, close connection and return results
-//     query.on('end', () => {
-//       done();
-//       return res.json(results);
-//     });
-//     done(err);
-//   });
-// });
+router.get('/:roleId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id = req.params.roleId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      done(err);
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    // SQL Query > Select Data
+    const query = client.query('select * from users us left outer join role_master rm on us.role_id=rm.rm_id left outer join role_permission_master rpm on rpm.rpm_rm_id=rm.rm_id left outer join permission_master pm on rpm.rpm_pm_id=pm.pm_id left outer join permission_sub_master psm on rpm.rpm_psm_id=psm.psm_id where role_id=$1',[id]);
+    // Stream results back one row at a time
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    // After all data is returned, close connection and return results
+    query.on('end', () => {
+      done();
+      return res.json(results);
+    });
+    done(err);
+  });
+});
 
 router.post('/changepassword', oauth.authorise(), (req, res, next) => {
   const results = [];
@@ -55,27 +56,27 @@ router.post('/changepassword', oauth.authorise(), (req, res, next) => {
   });
 });
 
+
 router.post('/isonline', oauth.authorise(), (req, res, next) => {
   const results = [];
   pool.connect(function(err, client, done){
     if(err) {
       done();
-      done(err);
+      // pg.end();
       console.log("the error is"+err);
       return res.status(500).json({success: false, data: err});
     }
-    // // SQL Query > Select Data
-    client.query('update users set is_online=1, last_login=now() where username=$1',[req.body.username]);
-    const query = client.query('select * from users where username=$1',[req.body.username]);
-    // Stream results back one row at a time
-    query.on('row', (row) => {
-      results.push(row);
+    client.query('BEGIN;');
+
+    var singleInsert = 'update users set is_online=1, last_login=now() where username=$1 RETURNING *',
+        params = [req.body.username]
+    client.query(singleInsert, params, function (error, result) {
+        results.push(result.rows[0]); // Will contain your inserted rows
+        done();
+        client.query('COMMIT;');
+        return res.json(results);
     });
-    // After all data is returned, close connection and return results
-    query.on('end', () => {
-      done();
-      return res.json(results);
-    });
+
     done(err);
   });
 });
