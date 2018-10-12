@@ -457,7 +457,7 @@ router.get('/contact/goal/:campaignId', oauth.authorise(), (req, res, next) => {
       console.log("the error is"+err);
       return res.status(500).json({success: false, data: err});
     }
-    const query = client.query("select count(cdm_id) as total from contact_discovery_master where call_status='Lead' and cdm_status=0 and cdm_cm_id=$1",[id]);
+    const query = client.query("select count(cdm_id) as total from contact_discovery_master where call_status='Qualify' and cdm_status=0 and cdm_cm_id=$1",[id]);
     query.on('row', (row) => {
       results.push(row);
     });

@@ -8,8 +8,9 @@ var config = require('../config.js');
 var pool = new pg.Pool(config);
 
 
-router.get('/', oauth.authorise(), (req, res, next) => {
+router.get('/:rmId', oauth.authorise(), (req, res, next) => {
   const results = [];
+  const id = req.params.rmId;
   pool.connect(function(err, client, done){
     if(err) {
       done();
@@ -17,7 +18,7 @@ router.get('/', oauth.authorise(), (req, res, next) => {
       console.log("the error is"+err);
       return res.status(500).json({success: false, data: err});
     }
-    const query = client.query("SELECT * FROM role_permission_master");
+    const query = client.query("SELECT * FROM permission_master pm left outer join role_permission_master rpm on rpm.rpm_pm_id=pm.pm_id left outer join role_master rm on rpm_rm_id=rm.rm_id where rm_id=$1",[id]);
     query.on('row', (row) => {
       results.push(row);
     });
@@ -40,7 +41,7 @@ router.get('/view/:rmId', oauth.authorise(), (req, res, next) => {
       console.log("the error is"+err);
       return res.status(500).json({success: false, data: err});
     }
-    const query = client.query("SELECT * FROM role_permission_master rpm inner join permission_master pm on rpm.rpm_pm_id=pm.pm_id left outer join role_master rm on rpm.rpm_rm_id=rm.rm_id where rm_id=$1",[id]);
+    const query = client.query("SELECT * FROM permission_sub_master psm left outer join role_permission_master rpm on psm.psm_id = rpm.rpm_psm_id where psm_pm_id=$1",[id]);
     query.on('row', (row) => {
       results.push(row);
 
