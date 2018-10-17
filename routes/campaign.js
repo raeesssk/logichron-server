@@ -191,34 +191,34 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
       return res.status(500).json({success: false, data: err});
     }
 
-    var singleInsert = "INSERT INTO campaign_master(cm_date,cm_first_dely,cm_end_date,cm_dely_frequency,cm_campaign_name,cm_restrict,cm_account_list,cm_supression_file,cm_domain_limit,cm_emp_size,cm_disqualifies,cm_title,cm_lead_count,cm_geo,cm_allow_domain,cm_revenue,cm_custom_question,cm_denied_domain,cm_campaign_asset,cm_industry,cm_dept,cm_method,cm_job,cm_vertical,cm_status) values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,0) RETURNING *",
-        params = [campaign.cm_date,campaign.cm_first_dely,campaign.cm_end_date,campaign.cm_dely_frequency,campaign.cm_campaign_name,campaign.cm_restrict,campaign.cm_account_list,campaign.cm_supression_file,campaign.cm_domain_limit,campaign.cm_emp_size,campaign.cm_disqualifies,campaign.cm_title,campaign.cm_lead_count,campaign.cm_geo,campaign.cm_allow_domain,campaign.cm_revenue,campaign.cm_custom_question,campaign.cm_denied_domain,campaign.cm_campaign_asset,campaign.cm_industry,campaign.cm_dept,campaign.cm_method,campaign.cm_job,campaign.cm_vertical]
+    var singleInsert = "INSERT INTO campaign_master(cm_date,cm_first_dely,cm_end_date,cm_dely_frequency,cm_campaign_name,cm_restrict,cm_account_list,cm_supression_file,cm_domain_limit,cm_emp_size,cm_disqualifies,cm_title,cm_lead_count,cm_geo,cm_allow_domain,cm_revenue,cm_custom_question,cm_denied_domain,cm_campaign_asset,cm_industry,cm_dept,cm_method,cm_job,cm_vertical,cm_userid,cm_status) values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,0) RETURNING *",
+        params = [campaign.cm_date,campaign.cm_first_dely,campaign.cm_end_date,campaign.cm_dely_frequency,campaign.cm_campaign_name,campaign.cm_restrict,campaign.cm_account_list,campaign.cm_supression_file,campaign.cm_domain_limit,campaign.cm_emp_size,campaign.cm_disqualifies,campaign.cm_title,campaign.cm_lead_count,campaign.cm_geo,campaign.cm_allow_domain,campaign.cm_revenue,campaign.cm_custom_question,campaign.cm_denied_domain,campaign.cm_campaign_asset,campaign.cm_industry,campaign.cm_dept,campaign.cm_method,campaign.cm_job,campaign.cm_vertical,campaign.userid]
     client.query(singleInsert, params, function (error, result) {
         results.push(result.rows[0]); // Will contain your inserted rows
 
         accountList.forEach(function(product,index){
-          client.query("INSERT into account_master_campaign_master(amcm_cm_id,amcm_company,amcm_website,amcm_status)values ($1,$2,$3,0) RETURNING *",
-            [result.rows[0].cm_id,product.amcm_company,product.amcm_website]);
+          client.query("INSERT into account_master_campaign_master(amcm_cm_id,amcm_company,amcm_website,amcm_userid,amcm_status)values ($1,$2,$3,$4,0) RETURNING *",
+            [result.rows[0].cm_id,product.amcm_company,product.amcm_website,product.userid]);
         });
 
         supressionList.forEach(function(product,index){
-          client.query("INSERT into suppression_campaign_master(scm_cm_id,scm_company,scm_website,scm_status)values ($1,$2,$3,0) RETURNING *",
-            [result.rows[0].cm_id,product.scm_company,product.scm_website]);
+          client.query("INSERT into suppression_campaign_master(scm_cm_id,scm_company,scm_website,scm_userid,scm_status)values ($1,$2,$3,$4,0) RETURNING *",
+            [result.rows[0].cm_id,product.scm_company,product.scm_website,product.userid]);
         });
 
         allowDomainList.forEach(function(product,index){
-          client.query("INSERT into allow_domain_campaign_master(adcm_cm_id,adcm_website,adcm_status)values ($1,$2,0) RETURNING *",
-            [result.rows[0].cm_id,product.adcm_website]);
+          client.query("INSERT into allow_domain_campaign_master(adcm_cm_id,adcm_website,adcm_userid,adcm_status)values ($1,$2,0) RETURNING *",
+            [result.rows[0].cm_id,product.adcm_website,product.userid]);
         });
 
         customQuestionList.forEach(function(product,index){
-          client.query("INSERT into custom_question_campaign_master(cmcm_cm_id,cmcm_question,cmcm_status)values ($1,$2,0) RETURNING *",
-            [result.rows[0].cm_id,product.cmcm_question]);
+          client.query("INSERT into custom_question_campaign_master(cmcm_cm_id,cmcm_question,cmcm_userid,cmcm_status)values ($1,$2,0) RETURNING *",
+            [result.rows[0].cm_id,product.cmcm_question,product.userid]);
         });
 
         deniedDomainList.forEach(function(product,index){
-          client.query("INSERT into denied_domain_campaign_master(ddcm_cm_id,ddcm_website,ddcm_status)values ($1,$2,0) RETURNING *",
-            [result.rows[0].cm_id,product.ddcm_website]);
+          client.query("INSERT into denied_domain_campaign_master(ddcm_cm_id,ddcm_website,ddcm_userid,ddcm_status)values ($1,$2,0) RETURNING *",
+            [result.rows[0].cm_id,product.ddcm_website,product.userid]);
         });
 
         done();
@@ -384,6 +384,7 @@ router.post('/delete/:campaignId', oauth.authorise(), (req, res, next) => {
 
 router.post('/campaign/total', oauth.authorise(), (req, res, next) => {
   const results = [];
+  console.log(req.body);
   pool.connect(function(err, client, done){
     if(err) {
       done();
@@ -396,11 +397,13 @@ router.post('/campaign/total', oauth.authorise(), (req, res, next) => {
     console.log(str);
     const strqry =  "SELECT count(cm.cm_id) as total "+
                     "from campaign_master cm "+
+                    "inner join users us on cm.cm_userid=us.id "+
                     "where cm.cm_status=0 "+
-                    "and LOWER(cm_campaign_name||''||cm_title) LIKE LOWER($1) "+
-                    "and cm_date BETWEEN $2 and $3; "
+                    "and cm.cm_userid=$1 "+
+                    "and LOWER(cm_campaign_name||''||cm_title) LIKE LOWER($2) "+
+                    "and cm_date BETWEEN $3 and $4; "
 
-    const query = client.query(strqry,[str,req.body.cm_from_date,req.body.cm_to_date]);
+    const query = client.query(strqry,[req.body.userid,str,req.body.cm_from_date,req.body.cm_to_date]);
     query.on('row', (row) => {
       results.push(row);
     });
@@ -415,6 +418,7 @@ router.post('/campaign/total', oauth.authorise(), (req, res, next) => {
 
 router.post('/campaign/limit', oauth.authorise(), (req, res, next) => {
   const results = [];
+  console.log(req.body);
   pool.connect(function(err, client, done){
     if(err) {
       done();
@@ -427,12 +431,14 @@ router.post('/campaign/limit', oauth.authorise(), (req, res, next) => {
 
     const strqry =  "SELECT cm_id,cm_first_dely,cm_end_date,cm_dely_frequency,cm_campaign_name,cm_restrict,cm_account_list,cm_supression_file,cm_domain_limit,cm_emp_size,cm_disqualifies,cm_title,cm_lead_count,cm_geo,cm_allow_domain,cm_revenue,cm_custom_question,cm_denied_domain,cm_campaign_asset,cm_industry,cm_dept,cm_method,cm_job,cm_vertical "+
                     "from campaign_master cm "+
+                    "inner join users us on cm.cm_userid=us.id "+
                     "where cm.cm_status=0 "+
-                    "and LOWER(cm_campaign_name||''||cm_title) LIKE LOWER($1) "+
-                    "and cm_date BETWEEN $2 and $3 "+
-                    "order by cm.cm_id desc LIMIT $4 OFFSET $5 ";
+                    "and cm.cm_userid=$1 "+
+                    "and LOWER(cm_campaign_name||''||cm_title) LIKE LOWER($2) "+
+                    "and cm_date BETWEEN $3 and $4 "+
+                    "order by cm.cm_id desc LIMIT $5 OFFSET $6 ";
 
-    const query = client.query(strqry,[ str, req.body.cm_from_date, req.body.cm_to_date, req.body.number, req.body.begin]);
+    const query = client.query(strqry,[ req.body.userid,str, req.body.cm_from_date, req.body.cm_to_date, req.body.number, req.body.begin]);
     query.on('row', (row) => {
       results.push(row);
     });
@@ -458,6 +464,29 @@ router.get('/contact/goal/:campaignId', oauth.authorise(), (req, res, next) => {
       return res.status(500).json({success: false, data: err});
     }
     const query = client.query("select count(cdm_id) as total from contact_discovery_master where call_status='Qualify' and cdm_status=0 and cdm_cm_id=$1",[id]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+    done(err);
+  });
+});
+
+router.get('/contact/count/:campaignId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id=req.params.campaignId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    const query = client.query("select count(cdm_id) as total from contact_discovery_master where cdm_status=0 and cdm_cm_id=$1",[id]);
     query.on('row', (row) => {
       results.push(row);
     });
@@ -601,11 +630,13 @@ router.post('/typeahead/search', oauth.authorise(), (req, res, next) => {
 
     const strqry =  "SELECT * "+
                     "FROM campaign_master cm "+
+                    "inner join users us on cm.cm_userid=us.id "+
                     "where cm.cm_status = 0 "+
-                    "and LOWER(cm_campaign_name||' '||cm_title) LIKE LOWER($1) "+
+                    "and cm_userid=$1 "+
+                    "and LOWER(cm_campaign_name||' '||cm_title) LIKE LOWER($2) "+
                     "order by cm.cm_id desc LIMIT 10";
 
-    const query = client.query(strqry,[str]);
+    const query = client.query(strqry,[req.body.userid,str]);
     query.on('row', (row) => {
       results.push(row);
     });

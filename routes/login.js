@@ -9,7 +9,32 @@ var multer = require('multer');
 
 var pool = new pg.Pool(config);
 
-router.get('/:roleId', oauth.authorise(), (req, res, next) => {
+router.get('/permission/:userId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id = req.params.userId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      done(err);
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    // SQL Query > Select Data
+    const query = client.query("select DISTINCT(pm_id),pm_name,pm_class from role_permission_master rpm left outer join permission_master pm on rpm.rpm_pm_id=pm.pm_id where rpm_rm_id = $1",[id]);
+    // Stream results back one row at a time
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    // After all data is returned, close connection and return results
+    query.on('end', () => {
+      done();
+      return res.json(results);
+    });
+    done(err);
+  });
+});
+
+router.get('/sub/:roleId', oauth.authorise(), (req, res, next) => {
   const results = [];
   const id = req.params.roleId;
   pool.connect(function(err, client, done){
@@ -20,7 +45,7 @@ router.get('/:roleId', oauth.authorise(), (req, res, next) => {
       return res.status(500).json({success: false, data: err});
     }
     // SQL Query > Select Data
-    const query = client.query('select * from users us left outer join role_master rm on us.role_id=rm.rm_id left outer join role_permission_master rpm on rpm.rpm_rm_id=rm.rm_id left outer join permission_master pm on rpm.rpm_pm_id=pm.pm_id left outer join permission_sub_master psm on rpm.rpm_psm_id=psm.psm_id where role_id=$1',[id]);
+    const query = client.query("select * from permission_sub_master where psm_pm_id=$1 order by psm_id asc",[id]);
     // Stream results back one row at a time
     query.on('row', (row) => {
       results.push(row);

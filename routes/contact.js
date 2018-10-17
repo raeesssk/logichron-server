@@ -273,15 +273,15 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
     }
     client.query('BEGIN;');
 
-        var singleInsert = "INSERT INTO contact_discovery_master(cdm_cm_id,cdm_mobile,cdm_first_name,cdm_last_name,cdm_job_title,cdm_job_level,cdm_dept,cdm_email_id,cdm_company_name,cdm_address,cdm_city,cdm_state,cdm_postal_code,cdm_country,cdm_industry,cdm_company_size,cdm_revenue,cdm_asset,cdm_domain,cdm_status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,0) RETURNING *",
-        params = [contact.cdm_cm_id.cm_id,encryption.encrypt(contact.cdm_mobile),encryption.encrypt(contact.cdm_first_name),encryption.encrypt(contact.cdm_last_name),encryption.encrypt(contact.cdm_job_title),encryption.encrypt(contact.cdm_job_level),encryption.encrypt(contact.cdm_dept),encryption.encrypt(contact.cdm_email_id),encryption.encrypt(contact.cdm_company_name),encryption.encrypt(contact.cdm_address),encryption.encrypt(contact.cdm_city),encryption.encrypt(contact.cdm_state),encryption.encrypt(contact.cdm_postal_code),encryption.encrypt(contact.cdm_country),encryption.encrypt(contact.cdm_industry),encryption.encrypt(contact.cdm_company_size),encryption.encrypt(contact.cdm_revenue),encryption.encrypt(contact.cdm_asset),encryption.encrypt(contact.cdm_domain)]
+        var singleInsert = "INSERT INTO contact_discovery_master(cdm_cm_id,cdm_mobile,cdm_first_name,cdm_last_name,cdm_job_title,cdm_job_level,cdm_dept,cdm_email_id,cdm_company_name,cdm_address,cdm_city,cdm_state,cdm_postal_code,cdm_country,cdm_industry,cdm_company_size,cdm_revenue,cdm_asset,cdm_domain,cdm_userid,cdm_status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,0) RETURNING *",
+        params = [contact.cdm_cm_id.cm_id,encryption.encrypt(contact.cdm_mobile),encryption.encrypt(contact.cdm_first_name),encryption.encrypt(contact.cdm_last_name),encryption.encrypt(contact.cdm_job_title),encryption.encrypt(contact.cdm_job_level),encryption.encrypt(contact.cdm_dept),encryption.encrypt(contact.cdm_email_id),encryption.encrypt(contact.cdm_company_name),encryption.encrypt(contact.cdm_address),encryption.encrypt(contact.cdm_city),encryption.encrypt(contact.cdm_state),encryption.encrypt(contact.cdm_postal_code),encryption.encrypt(contact.cdm_country),encryption.encrypt(contact.cdm_industry),encryption.encrypt(contact.cdm_company_size),encryption.encrypt(contact.cdm_revenue),encryption.encrypt(contact.cdm_asset),encryption.encrypt(contact.cdm_domain),contact.userid]
         
         client.query(singleInsert, params, function (error, result) {
         results.push(result.rows[0]);// Will contain your inserted rows
         
         answer.forEach(function(product,index){
-          client.query("INSERT into question_master(qm_questions,qm_answers,qm_cdm_id,qm_status) values($1,$2,$3,0) RETURNING *",
-            [encryption.encrypt(product.qm_questions),encryption.encrypt(product.qm_answers),result.rows[0].cdm_id]);
+          client.query("INSERT into question_master(qm_questions,qm_answers,qm_cdm_id,qm_userid,qm_status) values($1,$2,$3,$4,0) RETURNING *",
+            [encryption.encrypt(product.qm_questions),encryption.encrypt(product.qm_answers),result.rows[0].cdm_id],product.userid);
         
         });
         client.query('COMMIT;');
@@ -404,12 +404,15 @@ router.post('/contact/total', oauth.authorise(), (req, res, next) => {
 
     console.log(str);
     const strqry =  "SELECT count(cdm_id) as total "+
-                    "from contact_discovery_master "+
+                    "from contact_discovery_master cdm "+
+                    "left outer join campaign_master cm on cdm.cdm_cm_id=cm.cm_id "+
+                    "inner join users us on cdm.cdm_userid=us.id "+
                     "where cdm_status=0 "+
-                    "and LOWER(cdm_first_name||''||cdm_last_name) LIKE LOWER($1) "+
-                    "and date(cdm_created_at)::date BETWEEN $2 and $3; "
+                    "and cdm_userid=$1 "+
+                    "and LOWER(cdm_first_name||''||cdm_last_name) LIKE LOWER($2) "+
+                    "and date(cdm_created_at)::date BETWEEN $3 and $4; "
 
-    const query = client.query(strqry,[str,req.body.cdm_from_date,req.body.cdm_to_date]);
+    const query = client.query(strqry,[req.body.userid,str,req.body.cdm_from_date,req.body.cdm_to_date]);
     query.on('row', (row) => {
       results.push(row);
     });
@@ -437,12 +440,14 @@ router.post('/contact/limit', oauth.authorise(), (req, res, next) => {
     const strqry =  "SELECT * "+
                     "FROM contact_discovery_master cdm "+
                     "left outer join campaign_master cm on cdm.cdm_cm_id=cm.cm_id "+
+                    "inner join users us on cdm.cdm_userid=us.id "+
                     "where cdm.cdm_status = 0 "+
-                    "and LOWER(cm_campaign_name||''||cdm_first_name||''||cdm_last_name) LIKE LOWER($1) "+
-                    "and date(cdm_created_at)::date BETWEEN $2 and $3 "+
-                    "order by cdm.cdm_id desc LIMIT $4 OFFSET $5";
+                    "and cdm_userid=$1 "+
+                    "and LOWER(cm_campaign_name||''||cdm_first_name||''||cdm_last_name) LIKE LOWER($2) "+
+                    "and date(cdm_created_at)::date BETWEEN $3 and $4 "+
+                    "order by cdm.cdm_id desc LIMIT $5 OFFSET $6";
 
-    const query = client.query(strqry,[ str, req.body.cdm_from_date, req.body.cdm_to_date, req.body.number, req.body.begin]);
+    const query = client.query(strqry,[req.body.userid, str, req.body.cdm_from_date, req.body.cdm_to_date, req.body.number, req.body.begin]);
     query.on('row', (row) => {
       row.cdm_mobile=encryption.decrypt(row.cdm_mobile);
       row.cdm_first_name=encryption.decrypt(row.cdm_first_name);
@@ -519,7 +524,7 @@ router.post('/assignCampaign/total', oauth.authorise(), (req, res, next) => {
 
     console.log(str);
     const strqry =  "SELECT count(cdm_id) as total "+
-                    "from contact_discovery_master "+
+                    "from contact_discovery_master cdm "+
                     "where cdm_cm_id is null "+
                     "and LOWER(cdm_first_name||''||cdm_last_name) LIKE LOWER($1);";
 

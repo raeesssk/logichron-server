@@ -133,15 +133,18 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
       console.log("the error is"+err);
       return res.status(500).json({success: false, data: err});
     }
+    client.query('BEGIN;');
 
     var singleInsert = "INSERT INTO role_master(rm_name, rm_description, rm_status) values($1,$2,0) RETURNING *",
         params = [role.rm_name,role.rm_description]
     client.query(singleInsert, params, function (error, result) {
         results.push(result.rows[0]); // Will contain your inserted rows
         permission.forEach(function(value, key){
+          console.log(value);
           client.query('INSERT into role_permission_master(rpm_rm_id,rpm_pm_id,rpm_psm_id) values($1,$2,$3) RETURNING *',
-            [result.rows[0].rm_id,value.pm_id,value.psm_id]);
+            [result.rows[0].rm_id,value.psm_pm_id,value.psm_id]);
         });
+        client.query('COMMIT;');
         done();
         return res.json(results);
     });
@@ -174,6 +177,7 @@ router.post('/edit/:roleId', oauth.authorise(), (req, res, next) => {
             [product.pm_id]);
         });
         permission.forEach(function(value, key){
+          console.log(value);
           client.query('INSERT into role_permission_master(rpm_rm_id,rpm_pm_id,rpm_psm_id) values($1,$2,$3) RETURNING *',
             [result.rows[0].rm_id,value.pm_id,value.psm_id]);
         });
@@ -226,7 +230,6 @@ router.post('/role/total', oauth.authorise(), (req, res, next) => {
     console.log(str);
     const strqry =  "SELECT count(rm.rm_id) as total "+
                     "from role_master rm "+
-                    "left outer join role_permission_master rpm on rpm.rpm_rm_id=rm.rm_id "+
                     "where rm.rm_status=0 "+
                     "and LOWER(rm_name||''||rm_description) LIKE LOWER($1);";
 

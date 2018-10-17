@@ -41,7 +41,7 @@ router.get('/view/:rmId', oauth.authorise(), (req, res, next) => {
       console.log("the error is"+err);
       return res.status(500).json({success: false, data: err});
     }
-    const query = client.query("SELECT * FROM permission_sub_master psm left outer join role_permission_master rpm on psm.psm_id = rpm.rpm_psm_id where psm_pm_id=$1",[id]);
+    const query = client.query("SELECT * FROM permission_sub_master where psm_pm_id=$1",[id]);
     query.on('row', (row) => {
       results.push(row);
 
