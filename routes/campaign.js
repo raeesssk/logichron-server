@@ -207,17 +207,17 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
         });
 
         allowDomainList.forEach(function(product,index){
-          client.query("INSERT into allow_domain_campaign_master(adcm_cm_id,adcm_website,adcm_userid,adcm_status)values ($1,$2,0) RETURNING *",
+          client.query("INSERT into allow_domain_campaign_master(adcm_cm_id,adcm_website,adcm_userid,adcm_status)values ($1,$2,$3,0) RETURNING *",
             [result.rows[0].cm_id,product.adcm_website,product.userid]);
         });
 
         customQuestionList.forEach(function(product,index){
-          client.query("INSERT into custom_question_campaign_master(cmcm_cm_id,cmcm_question,cmcm_userid,cmcm_status)values ($1,$2,0) RETURNING *",
+          client.query("INSERT into custom_question_campaign_master(cmcm_cm_id,cmcm_question,cmcm_userid,cmcm_status)values ($1,$2,$3,0) RETURNING *",
             [result.rows[0].cm_id,product.cmcm_question,product.userid]);
         });
 
         deniedDomainList.forEach(function(product,index){
-          client.query("INSERT into denied_domain_campaign_master(ddcm_cm_id,ddcm_website,ddcm_userid,ddcm_status)values ($1,$2,0) RETURNING *",
+          client.query("INSERT into denied_domain_campaign_master(ddcm_cm_id,ddcm_website,ddcm_userid,ddcm_status)values ($1,$2,$3,0) RETURNING *",
             [result.rows[0].cm_id,product.ddcm_website,product.userid]);
         });
 
@@ -394,7 +394,6 @@ router.post('/campaign/total', oauth.authorise(), (req, res, next) => {
     }
     const str = "%"+req.body.search+"%";
 
-    console.log(str);
     const strqry =  "SELECT count(cm.cm_id) as total "+
                     "from campaign_master cm "+
                     "inner join users us on cm.cm_userid=us.id "+
@@ -418,7 +417,6 @@ router.post('/campaign/total', oauth.authorise(), (req, res, next) => {
 
 router.post('/campaign/limit', oauth.authorise(), (req, res, next) => {
   const results = [];
-  console.log(req.body);
   pool.connect(function(err, client, done){
     if(err) {
       done();

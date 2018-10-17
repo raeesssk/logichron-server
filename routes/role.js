@@ -126,6 +126,7 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
   const results = [];
   const role=req.body.role;
   const permission=req.body.permission;
+  const supermission = req.body.supermission;
   pool.connect(function(err, client, done){
     if(err) {
       done();
@@ -141,8 +142,8 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
         results.push(result.rows[0]); // Will contain your inserted rows
         permission.forEach(function(value, key){
           console.log(value);
-          client.query('INSERT into role_permission_master(rpm_rm_id,rpm_pm_id,rpm_psm_id) values($1,$2,$3) RETURNING *',
-            [result.rows[0].rm_id,value.psm_pm_id,value.psm_id]);
+          client.query('INSERT into role_permission_master(rpm_rm_id,rpm_pm_id,rpm_psm_id,rpm_pssm_id) values($1,$2,$3,$4) RETURNING *',
+            [result.rows[0].rm_id,value.psm_pm_id,value.psm_id,value.pssm_id]);
         });
         client.query('COMMIT;');
         done();
