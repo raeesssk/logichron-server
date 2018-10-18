@@ -108,7 +108,7 @@ router.get('/permission/:roleId', oauth.authorise(), (req, res, next) => {
       console.log("the error is"+err);
       return res.status(500).json({success: false, data: err});
     }
-    const query = client.query("SELECT * FROM permission_sub_master psm left outer join role_permission_master rpm on psm.psm_id = rpm.rpm_psm_id left outer join role_master rm on rpm.rpm_rm_id=rm.rm_id where rpm_rm_id=$1",[id]);
+    const query = client.query("SELECT rpm_rm_id,rpm_pm_id,rpm_psm_id,rpm_pssm_id FROM role_permission_master rpm left outer join permission_sub_master psm on rpm.rpm_psm_id =psm.psm_id left outer join permission_supersub_master pssm on rpm.rpm_pssm_id=pssm.pssm_id left outer join permission_master pm on rpm.rpm_pm_id=pm.pm_id where rpm_rm_id=$1",[id]);
     query.on('row', (row) => {
       results.push(row);
 
@@ -126,7 +126,6 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
   const results = [];
   const role=req.body.role;
   const permission=req.body.permission;
-  const supermission = req.body.supermission;
   pool.connect(function(err, client, done){
     if(err) {
       done();
@@ -141,7 +140,7 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
     client.query(singleInsert, params, function (error, result) {
         results.push(result.rows[0]); // Will contain your inserted rows
         permission.forEach(function(value, key){
-          console.log(value);
+
           client.query('INSERT into role_permission_master(rpm_rm_id,rpm_pm_id,rpm_psm_id,rpm_pssm_id) values($1,$2,$3,$4) RETURNING *',
             [result.rows[0].rm_id,value.psm_pm_id,value.psm_id,value.pssm_id]);
         });
@@ -175,12 +174,12 @@ router.post('/edit/:roleId', oauth.authorise(), (req, res, next) => {
         results.push(result.rows[0]); // Will contain your inserted rows
         remove.forEach(function(product, index) {
           client.query('delete from public.role_permission_master where rpm_pm_id=$1',
-            [product.pm_id]);
+            [product.pssm_pm_id]);
         });
         permission.forEach(function(value, key){
           console.log(value);
-          client.query('INSERT into role_permission_master(rpm_rm_id,rpm_pm_id,rpm_psm_id) values($1,$2,$3) RETURNING *',
-            [result.rows[0].rm_id,value.pm_id,value.psm_id]);
+          client.query('INSERT into role_permission_master(rpm_rm_id,rpm_pm_id,rpm_psm_id,rpm_pssm_id) values($1,$2,$3,$4) RETURNING *',
+            [result.rows[0].rm_id,value.psm_pm_id,value.psm_id,value.pssm_id]);
         });
 
         client.query('COMMIT;');

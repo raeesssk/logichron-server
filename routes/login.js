@@ -20,7 +20,7 @@ router.get('/permission/:userId', oauth.authorise(), (req, res, next) => {
       return res.status(500).json({success: false, data: err});
     }
     // SQL Query > Select Data
-    const query = client.query("select DISTINCT(pm_id),pm_name,pm_class from role_permission_master rpm left outer join permission_master pm on rpm.rpm_pm_id=pm.pm_id where rpm_rm_id = $1",[id]);
+    const query = client.query("select DISTINCT(pm_id),pm_name,pm_class from role_permission_master rpm left outer join permission_master pm on rpm.rpm_pm_id=pm.pm_id where rpm_rm_id = $1 order by pm_id asc",[id]);
     // Stream results back one row at a time
     query.on('row', (row) => {
       results.push(row);
@@ -56,6 +56,30 @@ router.get('/sub/:roleId', oauth.authorise(), (req, res, next) => {
       return res.json(results);
     });
     done(err);
+  });
+});
+
+router.get('/superole/:roleId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id=req.params.roleId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    const query = client.query("SELECT rpm_rm_id,rpm_pm_id,rpm_psm_id,rpm_pssm_id FROM role_permission_master rpm left outer join permission_sub_master psm on rpm.rpm_psm_id =psm.psm_id left outer join permission_supersub_master pssm on rpm.rpm_pssm_id=pssm.pssm_id left outer join permission_master pm on rpm.rpm_pm_id=pm.pm_id where rpm_rm_id=$1",[id]);
+    query.on('row', (row) => {
+      results.push(row);
+
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
   });
 });
 

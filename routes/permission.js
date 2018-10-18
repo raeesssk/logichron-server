@@ -65,7 +65,7 @@ router.get('/supersub/:psmId', oauth.authorise(), (req, res, next) => {
       console.log("the error is"+err);
       return res.status(500).json({success: false, data: err});
     }
-    const query = client.query("SELECT * FROM permission_supersub_master where pssm_psm_id=$1",[id]);
+    const query = client.query("SELECT * FROM permission_supersub_master pssm left outer join permission_sub_master psm on pssm.pssm_psm_id=psm.psm_id where pssm_psm_id=$1",[id]);
     query.on('row', (row) => {
       results.push(row);
 
