@@ -9,9 +9,9 @@ var multer = require('multer');
 
 var pool = new pg.Pool(config);
 
-router.get('/permission/:userId', oauth.authorise(), (req, res, next) => {
+router.get('/permission/:roleId', oauth.authorise(), (req, res, next) => {
   const results = [];
-  const id = req.params.userId;
+  const id = req.params.roleId;
   pool.connect(function(err, client, done){
     if(err) {
       done();
@@ -34,9 +34,8 @@ router.get('/permission/:userId', oauth.authorise(), (req, res, next) => {
   });
 });
 
-router.get('/sub/:roleId', oauth.authorise(), (req, res, next) => {
+router.post('/sub', oauth.authorise(), (req, res, next) => {
   const results = [];
-  const id = req.params.roleId;
   pool.connect(function(err, client, done){
     if(err) {
       done();
@@ -45,7 +44,7 @@ router.get('/sub/:roleId', oauth.authorise(), (req, res, next) => {
       return res.status(500).json({success: false, data: err});
     }
     // SQL Query > Select Data
-    const query = client.query("select * from permission_sub_master where psm_pm_id=$1 order by psm_id asc",[id]);
+    const query = client.query("select distinct(rpm.rpm_psm_id),psm_permissions,url,icon,psm_id from role_permission_master rpm inner join permission_sub_master psm on rpm.rpm_psm_id=psm.psm_id where psm_pm_id=$1 and rpm_rm_id=$2 order by psm_id asc",[ req.body.pm_id, req.body.roleid]);
     // Stream results back one row at a time
     query.on('row', (row) => {
       results.push(row);

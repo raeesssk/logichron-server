@@ -384,7 +384,6 @@ router.post('/delete/:campaignId', oauth.authorise(), (req, res, next) => {
 
 router.post('/campaign/total', oauth.authorise(), (req, res, next) => {
   const results = [];
-  console.log(req.body);
   pool.connect(function(err, client, done){
     if(err) {
       done();

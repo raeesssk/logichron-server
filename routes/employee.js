@@ -40,12 +40,12 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
   var Storage = multer.diskStorage({
       destination: function (req, file, callback) {
           // callback(null, "./images");
-            callback(null, '../logichron/resources/images-new');
+            callback(null, "../nginx/html/images"); 
             
       },
       filename: function (req, file, callback) {
           var fi = file.fieldname + "_" + Date.now() + "_" + file.originalname;
-          filenamestore = "../logichron/resources/images-new/"+fi;
+          filenamestore = "../images/"+fi;
           callback(null, fi);
       }
   });
@@ -148,7 +148,6 @@ router.post('/delete/:employeeId', oauth.authorise(), (req, res, next) => {
 
 router.post('/employee/total', oauth.authorise(), (req, res, next) => {
   const results = [];
-  console.log(req.body);
   pool.connect(function(err, client, done){
     if(err) {
       done();
@@ -181,7 +180,6 @@ router.post('/employee/total', oauth.authorise(), (req, res, next) => {
 
 router.post('/employee/limit', oauth.authorise(), (req, res, next) => {
   const results = [];
-  console.log(req.body);
   pool.connect(function(err, client, done){
     if(err) {
       done();

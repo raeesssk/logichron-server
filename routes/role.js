@@ -85,7 +85,7 @@ router.get('/:roleId', oauth.authorise(), (req, res, next) => {
       return res.status(500).json({success: false, data: err});
     }
     // SQL Query > Select Data
-    const query = client.query('SELECT rm_name,rm_description,rm_status,rm_updated_at,rm_created_at FROM role_master where rm_id=$1',[id]);
+    const query = client.query('SELECT rm_id,rm_name,rm_description,rm_status,rm_updated_at,rm_created_at FROM role_master where rm_id=$1',[id]);
     query.on('row', (row) => {
       results.push(row);
     });
@@ -173,8 +173,9 @@ router.post('/edit/:roleId', oauth.authorise(), (req, res, next) => {
     client.query(singleInsert, params, function (error, result) {
         results.push(result.rows[0]); // Will contain your inserted rows
         remove.forEach(function(product, index) {
-          client.query('delete from public.role_permission_master where rpm_pm_id=$1',
-            [product.pssm_pm_id]);
+          console.log(product);
+          client.query('delete from public.role_permission_master where rpm_psm_id=$1',
+            [product.psm_id]);
         });
         permission.forEach(function(value, key){
           console.log(value);

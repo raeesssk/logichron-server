@@ -113,21 +113,13 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
       return res.status(500).json({success: false, data: err});
     }
 
-    // bcrypt.hash(req.body.um_user_password, 5, function( err, bcryptedPassword) {
-    //     var singleInsert = "INSERT INTO users(username,password,first_name,icon_image,is_online) values($1,$2,$3,$4,0) RETURNING *",
-    //     params = [req.body.um_user_name,bcryptedPassword,req.body.um_emp_id.emp_name,req.body.um_emp_id.emp_image]
-    //     client.query(singleInsert, params, function (error, result) {
-    //         results.push(result.rows[0]); // Will contain your inserted rows
-    //         client.query("INSERT into user_master(um_emp_id,um_users_id,um_rm_id,um_status) values($1,$2,$3,0) RETURNING *",[req.body.um_emp_id.emp_id,result.rows[0].id,req.body.um_rm_id.rm_id]);
-    //         done();
-    //         return res.json(results);
-    //     });
-    // });
+      client.query('BEGIN;');
 
       var singleInsert = "INSERT INTO users(username,password,first_name,icon_image,user_emp_id,role_id) values($1,$2,$3,$4,$5,$6) RETURNING *",
-        params = [req.body.um_user_name,encryption.encrypt(req.body.um_user_password),req.body.um_emp_id.emp_name,req.body.um_emp_id.emp_image,req.body.um_emp_id.emp_id,req.body.um_rm_id.rm_id]
-        client.query(singleInsert, params, function (error, result) {
-            results.push(result.rows[0]); // Will contain your inserted rows
+      params = [req.body.um_user_name,encryption.encrypt(req.body.um_user_password),req.body.um_emp_id.emp_name,req.body.um_emp_id.emp_image,req.body.um_emp_id.emp_id,req.body.um_rm_id.rm_id]
+      client.query(singleInsert, params, function (error, result) {
+      results.push(result.rows[0]); // Will contain your inserted rows
+      client.query('COMMIT;');
             done();
             return res.json(results);
         });
@@ -139,7 +131,7 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
 
 router.post('/edit/:Id', oauth.authorise(), (req, res, next) => {
   const results = [];
-  const id = req.params.Id
+  const id = req.params.Id;
   pool.connect(function(err, client, done){
     if(err) {
       done();
@@ -149,12 +141,10 @@ router.post('/edit/:Id', oauth.authorise(), (req, res, next) => {
     }
     client.query('BEGIN;');
     
-    var singleInsert = 'update users set password=$1,updated_at=now() where id=$2 RETURNING *',
-        params = [encryption.encrypt(req.body.um_user_password),id];
+    var singleInsert = 'update users set password=$1,role_id=$2,updated_at=now() where id=$3 RETURNING *',
+        params = [encryption.encrypt(req.body.pass),req.body.um_rm.rm_id,id];
     client.query(singleInsert, params, function (error, result) {
         results.push(result.rows[0]); // Will contain your inserted rows
-
-        client.query("update role_master set rm_name=$1,rm_updated_at=now() where rm_id=$2",[req.body.um_rm_id.rm_name,req.body.um_rm_id.rm_id])
         client.query('COMMIT;');
         done();
         return res.json(results);
@@ -255,5 +245,31 @@ router.post('/user/limit', oauth.authorise(), (req, res, next) => {
     done(err);
   });
 });
+
+router.post('/view/:Id', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id=req.params.Id;
+  console.log(req.body+" "+id);
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    const query = client.query("select uam_url,uam_date_time from users_activity_master where uam_users_id=$1 and date(uam_date_time)::date BETWEEN $2 and $3",[id,req.body.um_from_date,req.body.um_to_date]);
+    query.on('row', (row) => {
+      results.push(row);
+
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
 
 module.exports = router;

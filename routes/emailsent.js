@@ -91,17 +91,15 @@ router.post('/reset/:tokenId',  (req, res, next) => {
     const query = client.query("SELECT * FROM tokens where reset_tokens=$1",[id]);
     query.on('row', (row) => {
       results.push(row);
-      console.log(results);
     });
     query.on('end', () => {
       done();
       // pg.end();
       var d = Date.now();
-      if(results.length > 0 && d < results[0].token_expires )
+      if(results.length > 0  )
       {
         var singleInsert = "update users set password=$1 where username=$2 RETURNING *",
           params = [encryption.encrypt(req.body.password),results[0].email_id]
-          console.log(params);
           client.query(singleInsert, params, function (error, result) {
            // Will contain your inserted rows
           done();

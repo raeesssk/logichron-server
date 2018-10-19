@@ -31,6 +31,7 @@ var question = require('./routes/question');
 var campaign= require('./routes/campaign');
 var telecaller= require('./routes/telecaller');
 var assign = require('./routes/assign');
+var history = require('./routes/history');
 
 var pmx = require('pmx').init({
   http          : true, // HTTP routes logging (default: true)
@@ -79,6 +80,7 @@ app.use('/question', question);
 app.use('/campaign', campaign);
 app.use('/telecaller',telecaller);
 app.use('/assign',assign);
+app.use('/history',history);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
