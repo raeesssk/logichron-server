@@ -165,7 +165,7 @@ router.post('/profile/image/:userId', oauth.authorise(), (req, res, next) => {
       },
       filename: function (req, file, callback) {
           var fi = file.fieldname + "_" + Date.now() + "_" + file.originalname;
-          filenamestore = "./images/"+fi;
+          filenamestore = "../images/"+fi;
           callback(null, fi);
       }
   });
