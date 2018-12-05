@@ -199,7 +199,7 @@ router.post('/audio/:jobId', oauth.authorise(), (req, res, next) => {
       },
       filename: function (req, file, callback) {
           var fi = file.fieldname + "_" + Date.now() + "_" + file.originalname;
-          filenamestore = "../images/"+fi;
+          filenamestore = "./images/"+fi;
           console.log(filenamestore);
           callback(null, fi);
       }
