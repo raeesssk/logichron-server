@@ -40,7 +40,7 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
   var Storage = multer.diskStorage({
       destination: function (req, file, callback) {
           // callback(null, "./images");
-            callback(null, "../nginx/html/images"); 
+            callback(null, "../nginx/html/logichron/images"); 
             
       },
       filename: function (req, file, callback) {
@@ -87,7 +87,7 @@ router.post('/edit/:employeeId', oauth.authorise(), (req, res, next) => {
   var Storage = multer.diskStorage({
       destination: function (req, file, callback) {
           // callback(null, "./images");
-            callback(null, "../nginx/html/images");
+            callback(null, "../nginx/html/logichron/images");
             // callback(null, "../logichron/resources/images-new");
       },
       filename: function (req, file, callback) {

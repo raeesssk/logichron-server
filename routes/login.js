@@ -160,7 +160,7 @@ router.post('/profile/image/:userId', oauth.authorise(), (req, res, next) => {
 
   var Storage = multer.diskStorage({
       destination: function (req, file, callback) {
-          callback(null, "../nginx/html/images");
+          callback(null, "../nginx/html/logichron/images");
           // callback(null, "../logichron/resources/images-new");
       },
       filename: function (req, file, callback) {

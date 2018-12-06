@@ -195,7 +195,7 @@ router.post('/audio/:jobId', oauth.authorise(), (req, res, next) => {
       destination: function (req, file, callback) {
           // callback(null, "./images");
             // callback(null, '../logichron/resources/audio');
-            callback(null, "../nginx/html/images");  
+            callback(null, "../nginx/html/logichron/images");  
       },
       filename: function (req, file, callback) {
           var fi = file.fieldname + "_" + Date.now() + "_" + file.originalname;
