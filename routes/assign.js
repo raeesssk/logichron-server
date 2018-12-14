@@ -166,7 +166,7 @@ router.post('/edit/:campaignId', oauth.authorise(), (req, res, next) => {
     employee.forEach(function(val,key){
     var singleInsert = 'update campaign_employee_master set cem_cm_id=$1, cem_emp_id=$2 where cem_id=$3 RETURNING *',
         params = [val.cem_cm_id,val.emp_id,val.cem_id];
-        console.log(params);
+        
     client.query(singleInsert, params, function (error, result) {
       
         results.push(result.rows[0]); // Will contain your inserted rows

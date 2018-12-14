@@ -183,6 +183,8 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
   const allowDomainList=req.body.allowDomainList;
   const customQuestionList=req.body.customQuestionList;
   const deniedDomainList=req.body.deniedDomainList;
+  const titleList = req.body.titleList;
+  const industryList = req.body.industryList;
   pool.connect(function(err, client, done){
     if(err) {
       done();
@@ -198,12 +200,12 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
 
         accountList.forEach(function(product,index){
           client.query("INSERT into account_master_campaign_master(amcm_cm_id,amcm_company,amcm_website,amcm_userid,amcm_status)values ($1,$2,$3,$4,0) RETURNING *",
-            [result.rows[0].cm_id,product.amcm_company,product.amcm_website,product.userid]);
+            [result.rows[0].cm_id,product.company,product.website,product.userid]);
         });
 
         supressionList.forEach(function(product,index){
           client.query("INSERT into suppression_campaign_master(scm_cm_id,scm_company,scm_website,scm_userid,scm_status)values ($1,$2,$3,$4,0) RETURNING *",
-            [result.rows[0].cm_id,product.scm_company,product.scm_website,product.userid]);
+            [result.rows[0].cm_id,product.company,product.website,product.userid]);
         });
 
         allowDomainList.forEach(function(product,index){
@@ -219,6 +221,16 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
         deniedDomainList.forEach(function(product,index){
           client.query("INSERT into denied_domain_campaign_master(ddcm_cm_id,ddcm_website,ddcm_userid,ddcm_status)values ($1,$2,$3,0) RETURNING *",
             [result.rows[0].cm_id,product.ddcm_website,product.userid]);
+        });
+
+        industryList.forEach(function(product,index){
+          client.query("INSERT into campaign_industry_master(cim_cm_id,cim_industries,cim_userid)values ($1,$2,$3) RETURNING *",
+            [result.rows[0].cm_id,product.industries,product.userid]);
+        });
+
+        titleList.forEach(function(product,index){
+          client.query("INSERT into denied_domain_campaign_master(ctm_cm_id,ctm_title,ctm_userid)values ($1,$2,$3) RETURNING *",
+            [result.rows[0].cm_id,product.titles,product.userid]);
         });
 
         done();
