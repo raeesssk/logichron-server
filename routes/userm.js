@@ -89,7 +89,7 @@ router.post('/check/emp', oauth.authorise(), (req, res, next) => {
       console.log("the error is"+err);
       return res.status(500).json({success: false, data: err});
     }
-    const query = client.query("SELECT user_emp_id FROM users where emp_id=$1",[req.body.um_emp_id.emp_id]);
+    const query = client.query("SELECT user_emp_id FROM users where user_emp_id=$1",[req.body.um_emp_id.emp_id]);
     query.on('row', (row) => {
       results.push(row);
       console.log(results);
