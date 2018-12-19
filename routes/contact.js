@@ -137,7 +137,7 @@ router.get('/:jobId', oauth.authorise(), (req, res, next) => {
   });
 });
 
-router.get('/question/:jobId', oauth.authorise(), (req, res, next) => {
+router.get('/questionans/:jobId', oauth.authorise(), (req, res, next) => {
   const results = [];
   const id = req.params.jobId;
   pool.connect(function(err, client, done){
@@ -147,10 +147,8 @@ router.get('/question/:jobId', oauth.authorise(), (req, res, next) => {
       console.log("the error is"+err);
       return res.status(500).json({success: false, contact: err});
     }
-    const query = client.query("SELECT qm_questions,qm_answers,qm_cdm_id FROM question_master qm left outer join contact_discovery_master cdm on qm.qm_cdm_id=cdm.cdm_id where cdm_id=$1",[id]);
+    const query = client.query("SELECT * FROM custom_question_campaign_master qm left outer join campaign_master cm on qm.cmcm_cm_id=cm.cm_id where cmcm_cm_id=$1",[id]);
     query.on('row', (row) => {
-      row.qm_questions=encryption.decrypt(row.qm_questions);
-      row.qm_answers=encryption.decrypt(row.qm_answers);
       results.push(row);
     });
     query.on('end', () => {
@@ -161,6 +159,53 @@ router.get('/question/:jobId', oauth.authorise(), (req, res, next) => {
   done(err);
   });
 });
+
+router.get('/supp/:jobId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id = req.params.jobId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, contact: err});
+    }
+    const query = client.query("SELECT * FROM suppression_campaign_master scm left outer join campaign_master cm on scm.scm_cm_id=cm.cm_id where scm_cm_id=$1",[id]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
+router.get('/denydomain/:jobId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id = req.params.jobId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, contact: err});
+    }
+    const query = client.query("SELECT * FROM denied_domain_campaign_master ddcm left outer join campaign_master cm on ddcm.ddcm_cm_id=cm.cm_id where ddcm_cm_id=$1",[id]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
 
 router.post('/check/accountList/:campaignId', oauth.authorise(), (req, res, next) => {
   const results = [];

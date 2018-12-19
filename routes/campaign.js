@@ -415,7 +415,53 @@ router.get('/method/:campaignId', oauth.authorise(), (req, res, next) => {
   });
 });
 
+router.get('/revenue/:campaignId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id = req.params.campaignId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    // SQL Query > Select Data
+    const query = client.query('select * from campaign_revenue_master where crem_cm_id=$1',[id]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
 
+router.get('/level/:campaignId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id = req.params.campaignId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    // SQL Query > Select Data
+    const query = client.query('select * from campaign_joblevel_master where cjlm_cm_id=$1',[id]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
 
 
 router.post('/add', oauth.authorise(), (req, res, next) => {
@@ -437,6 +483,9 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
   const campAssetList = req.body.campAssetList;
   const departmentList = req.body.departmentList;
   const methodList = req.body.methodList;
+
+  const revenueList = req.body.revenueList;
+  const levelList =  req.body.levelList
   pool.connect(function(err, client, done){
     if(err) {
       done();
@@ -525,6 +574,16 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
             [result.rows[0].cm_id,product.methodss]);
         });
 
+        revenueList.forEach(function(product,index){
+          client.query("INSERT into campaign_revenue_master(crem_cm_id,crem_revenue)values ($1,$2) RETURNING *",
+            [result.rows[0].cm_id,product.revenues]);
+        });
+
+        levelList.forEach(function(product,index){
+          client.query("INSERT into campaign_joblevel_master(cjlm_cm_id,cjlm_job_level)values ($1,$2) RETURNING *",
+            [result.rows[0].cm_id,product.job_level]);
+        });
+
         done();
         return res.json(results);
     });
@@ -583,6 +642,15 @@ router.post('/edit/:campaignId', oauth.authorise(), (req, res, next) => {
   const methodList=req.body.methodList;
   const removemethod=req.body.removemethod;
 
+  const oldrevenueList=req.body.oldrevenueList;
+  const revenueList=req.body.revenueList;
+  const removerevenue=req.body.removerevenue;
+
+  const oldlevelList=req.body.oldlevelList;
+  const levelList=req.body.levelList;
+  const removelevel=req.body.removelevel;
+
+
   pool.connect(function(err, client, done){
     if(err) {
       done();
@@ -601,11 +669,19 @@ router.post('/edit/:campaignId', oauth.authorise(), (req, res, next) => {
           client.query('delete from public.account_master_campaign_master where amcm_id=$1',
             [product.amcm_id]);
         });
-
-        oldaccountList.forEach(function(product, index) {
+        if(result.rows[0].cm_account_list == 'No'){
+            oldaccountList.forEach(function(product, index) {
+              client.query('delete from public.account_master_campaign_master where amcm_id=$1',
+                [product.amcm_id]);
+            });
+        }
+        else
+        {
+          oldaccountList.forEach(function(product, index) {
           client.query('update account_master_campaign_master set amcm_company=$1, amcm_website=$2, amcm_cm_id=$3, amcm_updated_at=now() where amcm_id=$4',
             [product.amcm_company,product.amcm_website,result.rows[0].cm_id,product.amcm_id]);
-        });
+          });
+        }
 
         accountList.forEach(function(product, index) {
           client.query("INSERT into account_master_campaign_master(amcm_cm_id,amcm_company,amcm_website,amcm_status)values ($1,$2,$3,0) RETURNING *",
@@ -618,11 +694,19 @@ router.post('/edit/:campaignId', oauth.authorise(), (req, res, next) => {
           client.query('delete from public.suppression_campaign_master where scm_id=$1',
             [product.scm_id]);
         });
-
-        oldsupressionList.forEach(function(product, index) {
+        if(result.rows[0].cm_supression_file == 'No'){
+            oldsupressionList.forEach(function(product, index) {
+          client.query('delete from public.suppression_campaign_master where scm_id=$1',
+            [product.scm_id]);
+          });
+        }
+        else{
+            oldsupressionList.forEach(function(product, index) {
           client.query('update suppression_campaign_master set scm_company=$1, scm_website=$2, scm_cm_id=$3, scm_updated_at=now() where scm_id=$4',
             [product.scm_company,product.scm_website,result.rows[0].cm_id,product.scm_id]);
-        });
+          });
+        }
+        
 
         supressionList.forEach(function(product, index) {
           client.query("INSERT into suppression_campaign_master(scm_cm_id,scm_company,scm_website,scm_status)values ($1,$2,$3,0) RETURNING *",
@@ -635,11 +719,19 @@ router.post('/edit/:campaignId', oauth.authorise(), (req, res, next) => {
           client.query('delete from public.allow_domain_campaign_master where adcm_id=$1',
             [product.adcm_id]);
         });
-
-        oldallowDomainList.forEach(function(product, index) {
+        if(result.rows[0].cm_allow_domain == 'No'){
+            oldallowDomainList.forEach(function(product, index) {
+          client.query('delete from public.allow_domain_campaign_master where adcm_id=$1',
+            [product.adcm_id]);
+          });
+        }
+        else{
+            oldallowDomainList.forEach(function(product, index) {
           client.query('update allow_domain_campaign_master set adcm_website=$1, adcm_cm_id=$2, adcm_updated_at=now() where adcm_id=$3',
             [product.adcm_website,result.rows[0].cm_id,product.adcm_id]);
-        });
+          });
+        }
+        
 
         allowDomainList.forEach(function(product, index) {
           client.query("INSERT into allow_domain_campaign_master(adcm_cm_id,adcm_website,adcm_status)values ($1,$2,0) RETURNING *",
@@ -652,11 +744,19 @@ router.post('/edit/:campaignId', oauth.authorise(), (req, res, next) => {
           client.query('delete from public.custom_question_campaign_master where cmcm_id=$1',
             [product.cmcm_id]);
         });
-
-        oldcustomQuestionList.forEach(function(product, index) {
+        if(result.rows[0].cm_custom_question == 'No'){
+            oldcustomQuestionList.forEach(function(product, index) {
+          client.query('delete from public.custom_question_campaign_master where cmcm_id=$1',
+            [product.cmcm_id]);
+          });
+        }
+        else{
+            oldcustomQuestionList.forEach(function(product, index) {
           client.query('update custom_question_campaign_master set cmcm_question=$1, cmcm_cm_id=$2, cmcm_updated_at=now() where cmcm_id=$3',
             [product.cmcm_question,result.rows[0].cm_id,product.cmcm_id]);
-        });
+          });
+        }
+        
 
         customQuestionList.forEach(function(product, index) {
           client.query("INSERT into custom_question_campaign_master(cmcm_cm_id,cmcm_question,cmcm_status)values ($1,$2,0) RETURNING *",
@@ -669,11 +769,19 @@ router.post('/edit/:campaignId', oauth.authorise(), (req, res, next) => {
           client.query('delete from public.denied_domain_campaign_master where ddcm_id=$1',
             [product.ddcm_id]);
         });
-
-        olddeniedDomainList.forEach(function(product, index) {
+        if(result.rows[0].cm_denied_domain == 'No'){
+          olddeniedDomainList.forEach(function(product, index) {
+          client.query('delete from public.denied_domain_campaign_master where ddcm_id=$1',
+            [product.ddcm_id]);
+          });
+        }
+        else{
+            olddeniedDomainList.forEach(function(product, index) {
           client.query('update denied_domain_campaign_master set ddcm_website=$1, ddcm_cm_id=$2, ddcm_updated_at=now() where ddcm_id=$3',
             [product.ddcm_website,result.rows[0].cm_id,product.ddcm_id]);
-        });
+          });
+        }
+        
 
         deniedDomainList.forEach(function(product, index) {
           client.query("INSERT into denied_domain_campaign_master(ddcm_cm_id,ddcm_website,ddcm_status)values ($1,$2,0) RETURNING *",
@@ -686,11 +794,20 @@ router.post('/edit/:campaignId', oauth.authorise(), (req, res, next) => {
           client.query('delete from public.campaign_title_master where ctm_id=$1',
             [product.ctm_id]);
         });
-
-        oldtitleList.forEach(function(product, index) {
+        if(result.rows[0].cm_title == 'No')
+        {
+          oldtitleList.forEach(function(product, index) {
+          client.query('delete from public.campaign_title_master where ctm_id=$1',
+            [product.ctm_id]);
+          });
+        }
+        else{
+          oldtitleList.forEach(function(product, index) {
           client.query('update campaign_title_master set ctm_title=$1 where ctm_id=$2',
             [product.ctm_title,product.ctm_id]);
-        });
+          });
+        }
+        
 
         titleList.forEach(function(product, index) {
           client.query("INSERT into campaign_title_master(ctm_cm_id,ctm_title)values ($1,$2) RETURNING *",
@@ -703,12 +820,22 @@ router.post('/edit/:campaignId', oauth.authorise(), (req, res, next) => {
           client.query('delete from public.campaign_industry_master where cim_id=$1',
             [product.cim_id]);
         });
-
-        oldindustryList.forEach(function(product, index) {
+        if(result.rows[0].cm_industry == 'No')
+        {
+          oldindustryList.forEach(function(product, index) {
+          client.query('delete from public.campaign_industry_master where cim_id=$1',
+            [product.cim_id]);
+          });
+        }
+        else
+        {
+          oldindustryList.forEach(function(product, index) {
           client.query('update campaign_industry_master set cim_industries=$1 where cim_id=$2',
             [product.cim_industries,product.cim_id]);
-        });
+          });
 
+        }
+        
         industryList.forEach(function(product, index) {
           client.query("INSERT into campaign_industry_master(cim_cm_id,cim_industries)values ($1,$2) RETURNING *",
             [result.rows[0].cm_id,product.industries]);
@@ -720,11 +847,21 @@ router.post('/edit/:campaignId', oauth.authorise(), (req, res, next) => {
           client.query('delete from public.campaign_restriction_master where crm_id=$1',
             [product.crm_id]);
         });
-
-        oldrestrictList.forEach(function(product, index) {
+        if(result.rows[0].cm_restrict == 'No')
+        {
+          oldrestrictList.forEach(function(product, index) {
+          client.query('delete from public.campaign_restriction_master where crm_id=$1',
+            [product.crm_id]);
+        });
+        }
+        else
+        {
+          oldrestrictList.forEach(function(product, index) {
           client.query('update campaign_restriction_master set crm_restriction=$1 where crm_id=$2',
             [product.crm_restriction,product.crm_id]);
-        });
+          });
+        }
+        
 
         restrictList.forEach(function(product, index) {
           client.query("INSERT into campaign_restriction_master(crm_cm_id,crm_restriction)values ($1,$2) RETURNING *",
@@ -737,11 +874,19 @@ router.post('/edit/:campaignId', oauth.authorise(), (req, res, next) => {
           client.query('delete from public.campaign_domainlimit_master where cdlm_id=$1',
             [product.cdlm_id]);
         });
-
-        olddlimitList.forEach(function(product, index) {
-          client.query('update campaign_domainlimit_master set cdlm_domainlimit=$1 where cdlm_id=$2',
+        if(result.rows[0].cm_domain_limit == 'No'){
+          olddlimitList.forEach(function(product, index) {
+          client.query('delete from public.campaign_domainlimit_master where cdlm_id=$1',
+            [product.cdlm_id]);
+          });
+        }
+        else{
+            olddlimitList.forEach(function(product, index) {
+            client.query('update campaign_domainlimit_master set cdlm_domainlimit=$1 where cdlm_id=$2',
             [product.cdlm_domainlimit,product.cdlm_id]);
-        });
+          });
+        }
+        
 
         domainList.forEach(function(product, index) {
           client.query("INSERT into campaign_domainlimit_master(cdlm_cm_id,cdlm_domainlimit)values ($1,$2) RETURNING *",
@@ -754,11 +899,20 @@ router.post('/edit/:campaignId', oauth.authorise(), (req, res, next) => {
           client.query('delete from public.campaign_employee_size_master where cesm_master=$1',
             [product.cesm_master]);
         });
-
-        oldempsizeList.forEach(function(product, index) {
+        if(result.rows[0].cm_emp_size == 'No'){
+          oldempsizeList.forEach(function(product, index) {
+          client.query('delete from public.campaign_employee_size_master where cesm_master=$1',
+            [product.cesm_master]);
+          });
+        }
+        else
+        {
+          oldempsizeList.forEach(function(product, index) {
           client.query('update campaign_employee_size_master set cesm_employee_size=$1 where cesm_master=$2',
             [product.cesm_employee_size,product.cesm_master]);
-        });
+          });
+        }
+        
 
         empsizeList.forEach(function(product, index) {
           client.query("INSERT into campaign_employee_size_master(cesm_cm_id,cesm_employee_size)values ($1,$2) RETURNING *",
@@ -771,11 +925,19 @@ router.post('/edit/:campaignId', oauth.authorise(), (req, res, next) => {
           client.query('delete from public.campaign_vertical_master where cvm_id=$1',
             [product.cvm_id]);
         });
-
-        oldverticalList.forEach(function(product, index) {
-          client.query('update campaign_vertical_master set cvm_verticals=$1 where cvm_id=$2',
-            [product.cvm_verticals,product.cvm_id]);
+        if(result.rows[0].cm_vertical == 'No'){
+          oldverticalList.forEach(function(product, index) {
+          client.query('delete from public.campaign_vertical_master where cvm_id=$1',
+            [product.cvm_id]);
         });
+        }
+        else{
+            oldverticalList.forEach(function(product, index) {
+            client.query('update campaign_vertical_master set cvm_verticals=$1 where cvm_id=$2',
+            [product.cvm_verticals,product.cvm_id]);
+          });
+        }
+        
 
         VerticalList.forEach(function(product, index) {
           client.query("INSERT into campaign_vertical_master(cvm_cm_id,cvm_verticals)values ($1,$2) RETURNING *",
@@ -788,11 +950,19 @@ router.post('/edit/:campaignId', oauth.authorise(), (req, res, next) => {
           client.query('delete from public.campaign_geo_master where cgm_id=$1',
             [product.cgm_id]);
         });
-
-        oldgeoList.forEach(function(product, index) {
+        if(result.rows[0].cm_geo == 'No'){
+          oldgeoList.forEach(function(product, index) {
+          client.query('delete from public.campaign_geo_master where cgm_id=$1',
+            [product.cgm_id]);
+        });
+        }
+        else{
+          oldgeoList.forEach(function(product, index) {
           client.query('update campaign_geo_master set cgm_geo=$1 where cgm_id=$2',
             [product.cgm_geo,product.cgm_id]);
-        });
+          });
+        }
+        
 
         geoList.forEach(function(product, index) {
           client.query("INSERT into campaign_geo_master(cgm_cm_id,cgm_geo)values ($1,$2) RETURNING *",
@@ -805,11 +975,20 @@ router.post('/edit/:campaignId', oauth.authorise(), (req, res, next) => {
           client.query('delete from public.campaign_asset_master where cam_id=$1',
             [product.cam_id]);
         });
-
-        oldassetList.forEach(function(product, index) {
+        if(result.rows[0].cm_campaign_asset == 'No'){
+          oldassetList.forEach(function(product, index) {
+          client.query('delete from public.campaign_asset_master where cam_id=$1',
+            [product.cam_id]);
+        });
+        }
+        else
+        {
+          oldassetList.forEach(function(product, index) {
           client.query('update campaign_asset_master set cam_campaign_asset=$1 where cam_id=$2',
             [product.cam_campaign_asset,product.cam_id]);
         });
+        }
+        
 
         campAssetList.forEach(function(product, index) {
           client.query("INSERT into campaign_asset_master(cam_cm_id,cam_campaign_asset)values ($1,$2) RETURNING *",
@@ -822,11 +1001,20 @@ router.post('/edit/:campaignId', oauth.authorise(), (req, res, next) => {
           client.query('delete from public.campaign_department_master where cdm_id=$1',
             [product.cdm_id]);
         });
-
-        olddeptList.forEach(function(product, index) {
+        if(result.rows[0].cm_dept == 'No'){
+          olddeptList.forEach(function(product, index) {
+          client.query('delete from public.campaign_department_master where cdm_id=$1',
+            [product.cdm_id]);
+          });
+        }
+        else
+        {
+          olddeptList.forEach(function(product, index) {
           client.query('update campaign_department_master set cdm_department=$1 where cdm_id=$2',
             [product.cdm_department,product.cdm_id]);
-        });
+          });
+        }
+        
 
         departmentList.forEach(function(product, index) {
           client.query("INSERT into campaign_department_master(cdm_cm_id,cdm_department)values ($1,$2) RETURNING *",
@@ -839,11 +1027,19 @@ router.post('/edit/:campaignId', oauth.authorise(), (req, res, next) => {
           client.query('delete from public.campaign_method_master where cmm_id=$1',
             [product.cmm_id]);
         });
-
-        oldmethodList.forEach(function(product, index) {
+        if(result.rows[0].cm_method == 'No'){
+          oldmethodList.forEach(function(product, index) {
+          client.query('delete from public.campaign_method_master where cmm_id=$1',
+            [product.cmm_id]);
+        });
+        }
+        else{
+          oldmethodList.forEach(function(product, index) {
           client.query('update campaign_method_master set cmm_method=$1 where cmm_id=$2',
             [product.cmm_method,product.cmm_id]);
         });
+        }
+        
 
         methodList.forEach(function(product, index) {
           client.query("INSERT into campaign_method_master(cmm_cm_id,cmm_method)values ($1,$2) RETURNING *",
@@ -851,6 +1047,51 @@ router.post('/edit/:campaignId', oauth.authorise(), (req, res, next) => {
         //client.query('update design_product_master set dtm_part_no=$1, dtm_part_name=$2, dtm_qty=$3, dtm_updated_at=now() where dtm_id=$4',[product.dtm_part_no,product.dtm_part_name,product.dtm_qty,result.rows[0].dm_id]);
         });
         /*end of industry domain*/
+        removerevenue.forEach(function(product, index) {
+          client.query('delete from public.campaign_revenue_master where crem_id=$1',
+            [product.crem_id]);
+        });
+        if(result.rows[0].cm_revenue == 'No'){
+          oldrevenueList.forEach(function(product, index) {
+          client.query('delete from public.campaign_revenue_master where crem_id=$1',
+            [product.crem_id]);
+        });
+        }
+        else{
+          oldrevenueList.forEach(function(product, index) {
+            client.query('update campaign_revenue_master set crem_revenue=$1 where crem_id=$2',
+              [product.crem_revenue,product.crem_id]);
+          });
+        }
+        revenueList.forEach(function(product, index) {
+          client.query("INSERT into campaign_revenue_master(crem_cm_id,crem_revenue)values ($1,$2) RETURNING *",
+            [result.rows[0].cm_id,product.revenues]);
+        //client.query('update design_product_master set dtm_part_no=$1, dtm_part_name=$2, dtm_qty=$3, dtm_updated_at=now() where dtm_id=$4',[product.dtm_part_no,product.dtm_part_name,product.dtm_qty,result.rows[0].dm_id]);
+        });
+
+        removelevel.forEach(function(product, index) {
+          client.query('delete from public.campaign_joblevel_master where cjlm_id=$1',
+            [product.cjlm_id]);
+        });
+        if(result.rows[0].cm_job == 'No')
+        {
+          oldlevelList.forEach(function(product, index) {
+          client.query('delete from public.campaign_joblevel_master where cjlm_id=$1',
+            [product.cjlm_id]);
+          });
+        }
+        else{
+          oldlevelList.forEach(function(product, index) {
+          client.query('update campaign_joblevel_master set cjlm_job_level=$1 where cjlm_id=$2',
+            [product.cjlm_job_level,product.cjlm_id]);
+          });
+        }
+
+        levelList.forEach(function(product, index) {
+          client.query("INSERT into campaign_joblevel_master(cjlm_cm_id,cjlm_job_level)values ($1,$2) RETURNING *",
+            [result.rows[0].cm_id,product.job_level]);
+        //client.query('update design_product_master set dtm_part_no=$1, dtm_part_name=$2, dtm_qty=$3, dtm_updated_at=now() where dtm_id=$4',[product.dtm_part_no,product.dtm_part_name,product.dtm_qty,result.rows[0].dm_id]);
+        });
 
         client.query('COMMIT;');
         done();
@@ -1358,6 +1599,55 @@ router.get('/methodview/:campaignId', oauth.authorise(), (req, res, next) => {
   done(err);
   });
 });
+
+router.get('/revenueview/:campaignId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id=req.params.campaignId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    const query = client.query("SELECT * FROM campaign_revenue_master where crem_cm_id=$1",[id]);
+    query.on('row', (row) => {
+      results.push(row);
+
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
+router.get('/levelview/:campaignId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id=req.params.campaignId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    const query = client.query("SELECT * FROM campaign_joblevel_master where cjlm_cm_id=$1",[id]);
+    query.on('row', (row) => {
+      results.push(row);
+
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
 
 router.post('/typeahead/search', oauth.authorise(), (req, res, next) => {
   const results = [];
