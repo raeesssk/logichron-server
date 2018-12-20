@@ -206,6 +206,214 @@ router.get('/denydomain/:jobId', oauth.authorise(), (req, res, next) => {
   });
 });
 
+router.get('/jobtitle/:jobId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id = req.params.jobId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, contact: err});
+    }
+    const query = client.query("SELECT * FROM campaign_title_master ctm left outer join campaign_master cm on ctm.ctm_cm_id=cm.cm_id where ctm_cm_id=$1",[id]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
+router.get('/joblevel/:jobId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id = req.params.jobId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, contact: err});
+    }
+    const query = client.query("SELECT * FROM campaign_joblevel_master cjlm left outer join campaign_master cm on cjlm.cjlm_cm_id=cm.cm_id where cjlm_cm_id=$1",[id]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
+router.get('/dept/:jobId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id = req.params.jobId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, contact: err});
+    }
+    const query = client.query("SELECT * FROM campaign_department_master cdm left outer join campaign_master cm on cdm.cdm_cm_id=cm.cm_id where cdm_cm_id=$1",[id]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
+router.get('/company/:jobId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id = req.params.jobId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, contact: err});
+    }
+    const query = client.query("SELECT * FROM account_master_campaign_master amcm left outer join campaign_master cm on amcm.amcm_cm_id=cm.cm_id where amcm_cm_id=$1",[id]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
+router.get('/industry/:jobId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id = req.params.jobId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, contact: err});
+    }
+    const query = client.query("SELECT * FROM campaign_industry_master cim left outer join campaign_master cm on cim.cim_cm_id=cm.cm_id where cim_cm_id=$1",[id]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
+router.get('/size/:jobId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id = req.params.jobId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, contact: err});
+    }
+    const query = client.query("SELECT * FROM campaign_employee_size_master cesm left outer join campaign_master cm on cesm.cesm_cm_id=cm.cm_id where cesm_cm_id=$1",[id]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
+router.get('/revenue/:jobId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id = req.params.jobId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, contact: err});
+    }
+    const query = client.query("SELECT * FROM campaign_revenue_master crem left outer join campaign_master cm on crem.crem_cm_id=cm.cm_id where crem_cm_id=$1",[id]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
+router.get('/asset/:jobId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id = req.params.jobId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, contact: err});
+    }
+    const query = client.query("SELECT * FROM campaign_asset_master cam left outer join campaign_master cm on cam.cam_cm_id=cm.cm_id where cam_cm_id=$1",[id]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
+router.get('/allowdomain/:jobId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id = req.params.jobId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, contact: err});
+    }
+    const query = client.query("SELECT * FROM allow_domain_campaign_master adcm left outer join campaign_master cm on adcm.adcm_cm_id=cm.cm_id where adcm_cm_id=$1",[id]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
+
 
 router.post('/check/accountList/:campaignId', oauth.authorise(), (req, res, next) => {
   const results = [];
@@ -319,16 +527,12 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
     client.query('BEGIN;');
 
         var singleInsert = "INSERT INTO contact_discovery_master(cdm_cm_id,cdm_mobile,cdm_first_name,cdm_last_name,cdm_job_title,cdm_job_level,cdm_dept,cdm_email_id,cdm_company_name,cdm_address,cdm_city,cdm_state,cdm_postal_code,cdm_country,cdm_industry,cdm_company_size,cdm_revenue,cdm_asset,cdm_domain,cdm_userid,cdm_status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,0) RETURNING *",
-        params = [contact.cdm_cm_id.cm_id,encryption.encrypt(contact.cdm_mobile),encryption.encrypt(contact.cdm_first_name),encryption.encrypt(contact.cdm_last_name),encryption.encrypt(contact.cdm_job_title),encryption.encrypt(contact.cdm_job_level),encryption.encrypt(contact.cdm_dept),encryption.encrypt(contact.cdm_email_id),encryption.encrypt(contact.cdm_company_name),encryption.encrypt(contact.cdm_address),encryption.encrypt(contact.cdm_city),encryption.encrypt(contact.cdm_state),encryption.encrypt(contact.cdm_postal_code),encryption.encrypt(contact.cdm_country),encryption.encrypt(contact.cdm_industry),encryption.encrypt(contact.cdm_company_size),encryption.encrypt(contact.cdm_revenue),encryption.encrypt(contact.cdm_asset),encryption.encrypt(contact.cdm_domain),contact.userid]
+        params = [contact.cdm_cm_id.cm_id,encryption.encrypt(contact.cdm_mobile),encryption.encrypt(contact.cdm_first_name),encryption.encrypt(contact.cdm_last_name),encryption.encrypt(contact.titles.ctm_title),encryption.encrypt(contact.levels.cjlm_job_level),encryption.encrypt(contact.departments.cdm_department),encryption.encrypt(contact.cdm_email_id),encryption.encrypt(contact.companies.amcm_company),encryption.encrypt(contact.cdm_address),encryption.encrypt(contact.cdm_city),encryption.encrypt(contact.cdm_state),encryption.encrypt(contact.cdm_postal_code),encryption.encrypt(contact.cdm_country),encryption.encrypt(contact.industries.cim_industries),encryption.encrypt(contact.sizes.cesm_employee_size),encryption.encrypt(contact.revenues.crem_revenue),encryption.encrypt(contact.assets.cam_campaign_asset),encryption.encrypt(contact.domains.adcm_website),contact.userid]
         
         client.query(singleInsert, params, function (error, result) {
         results.push(result.rows[0]);// Will contain your inserted rows
         
-        answer.forEach(function(product,index){
-          client.query("INSERT into question_master(qm_questions,qm_answers,qm_cdm_id,qm_userid,qm_status) values($1,$2,$3,$4,0) RETURNING *",
-            [encryption.encrypt(product.qm_questions),encryption.encrypt(product.qm_answers),result.rows[0].cdm_id],product.userid);
         
-        });
         client.query('COMMIT;');
         done();
         return res.json(results);
