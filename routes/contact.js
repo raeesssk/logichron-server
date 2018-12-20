@@ -514,9 +514,7 @@ router.post('/check/AllDomain/:campaignId', oauth.authorise(), (req, res, next) 
 
 router.post('/add', oauth.authorise(), (req, res, next) => {
   const results = [];
-  const answer=req.body.answer;
   const contact=req.body.contact;
-  console.log(contact);
   pool.connect(function(err, client, done){
     if(err) {
       done();
@@ -526,13 +524,12 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
     }
     client.query('BEGIN;');
 
-        var singleInsert = "INSERT INTO contact_discovery_master(cdm_cm_id,cdm_mobile,cdm_first_name,cdm_last_name,cdm_job_title,cdm_job_level,cdm_dept,cdm_email_id,cdm_company_name,cdm_address,cdm_city,cdm_state,cdm_postal_code,cdm_country,cdm_industry,cdm_company_size,cdm_revenue,cdm_asset,cdm_domain,cdm_userid,cdm_status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,0) RETURNING *",
+       var singleInsert = "INSERT INTO contact_discovery_master(cdm_cm_id,cdm_mobile,cdm_first_name,cdm_last_name,cdm_job_title,cdm_job_level,cdm_dept,cdm_email_id,cdm_company_name,cdm_address,cdm_city,cdm_state,cdm_postal_code,cdm_country,cdm_industry,cdm_company_size,cdm_revenue,cdm_asset,cdm_domain,cdm_userid,cdm_status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,0) RETURNING *",
         params = [contact.cdm_cm_id.cm_id,encryption.encrypt(contact.cdm_mobile),encryption.encrypt(contact.cdm_first_name),encryption.encrypt(contact.cdm_last_name),encryption.encrypt(contact.titles.ctm_title),encryption.encrypt(contact.levels.cjlm_job_level),encryption.encrypt(contact.departments.cdm_department),encryption.encrypt(contact.cdm_email_id),encryption.encrypt(contact.companies.amcm_company),encryption.encrypt(contact.cdm_address),encryption.encrypt(contact.cdm_city),encryption.encrypt(contact.cdm_state),encryption.encrypt(contact.cdm_postal_code),encryption.encrypt(contact.cdm_country),encryption.encrypt(contact.industries.cim_industries),encryption.encrypt(contact.sizes.cesm_employee_size),encryption.encrypt(contact.revenues.crem_revenue),encryption.encrypt(contact.assets.cam_campaign_asset),encryption.encrypt(contact.domains.adcm_website),contact.userid]
-        
+        console.log(params);
         client.query(singleInsert, params, function (error, result) {
         results.push(result.rows[0]);// Will contain your inserted rows
-        
-        
+      
         client.query('COMMIT;');
         done();
         return res.json(results);
@@ -579,10 +576,7 @@ router.post('/import', (req, res, next) => {
 router.post('/edit/:jobId', oauth.authorise(), (req, res, next) => {
   const results = [];
   const id = req.params.jobId;
-  const answers=req.body.answers;
   const contact=req.body.contact;
-  const answersadd=req.body.answersadd;
-  const remove=req.body.remove;
   pool.connect(function(err, client, done){
     if(err) {
       done();
@@ -597,15 +591,6 @@ router.post('/edit/:jobId', oauth.authorise(), (req, res, next) => {
     client.query(singleInsert, params, function (error, result) {
         results.push(result.rows[0]); // Will contain your inserted rows
 
-        remove.forEach(function(val,index){
-           client.query("delete from question_master where qm_id=$1",[val.qm_id]);
-        });
-        answers.forEach(function(product,index){
-          client.query("update question_master set qm_questions=$1,qm_answers=$2 where qm_cdm_id=$3",[encryption.encrypt(product.qm_questions),encryption.encrypt(product.qm_answers),result.rows[0].cdm_id]);
-        });
-        answersadd.forEach(function(value,index){
-          client.query("INSERT into question_master(qm_questions,qm_answers,qm_cdm_id,qm_status) values($1,$2,$3,0)",[encryption.encrypt(value.qm_questions),encryption.encrypt(value.qm_answers),result.rows[0].cdm_id]);
-        });
         
         client.query('COMMIT;');
         done();

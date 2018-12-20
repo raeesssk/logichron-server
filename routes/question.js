@@ -18,10 +18,8 @@ router.get('/view/:jobId', oauth.authorise(), (req, res, next) => {
       console.log("the error is"+err);
       return res.status(500).json({success: false, data: err});
     }
-    const query = client.query("SELECT qm_questions,qm_answers,qm_cdm_id FROM question_master qm left outer join contact_discovery_master cdm on qm.qm_cdm_id=cdm.cdm_id where cdm_id=$1",[id]);
+    const query = client.query("SELECT * FROM custom_question_campaign_master qm left outer join campaign_master cm on qm.cmcm_cm_id=cm.cm_id where cmcm_cm_id=$1",[id]);
     query.on('row', (row) => {
-      row.qm_questions=encryption.decrypt(row.qm_questions);
-      row.qm_answers=encryption.decrypt(row.qm_answers);
       results.push(row);
 
     });
