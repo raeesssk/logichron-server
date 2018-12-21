@@ -106,7 +106,7 @@ router.get('/:jobId', oauth.authorise(), (req, res, next) => {
       console.log("the error is"+err);
       return res.status(500).json({success: false, contact: err});
     }
-    const query = client.query("SELECT * from contact_discovery_master cdm LEFT OUTER JOIN question_master qm on qm.qm_cdm_id=cdm.cdm_id LEFT OUTER JOIN campaign_master cm on cdm.cdm_cm_id=cm.cm_id where cdm_id=$1",[id]);
+    const query = client.query("SELECT * from contact_discovery_master cdm LEFT OUTER JOIN campaign_master cm on cdm.cdm_cm_id=cm.cm_id where cdm_id=$1",[id]);
     query.on('row', (row) => {
       row.cdm_mobile=encryption.decrypt(row.cdm_mobile);
       row.cdm_first_name=encryption.decrypt(row.cdm_first_name);
@@ -587,7 +587,7 @@ router.post('/edit/:jobId', oauth.authorise(), (req, res, next) => {
     client.query('BEGIN;');
     
     var singleInsert = 'update contact_discovery_master set cdm_first_name=$1, cdm_last_name=$2, cdm_job_title=$3, cdm_job_level=$4, cdm_dept=$5, cdm_email_id=$6, cdm_mobile=$7, cdm_company_name=$8, cdm_address=$9, cdm_city=$10, cdm_state=$11, cdm_postal_code=$12, cdm_country=$13, cdm_industry=$14, cdm_company_size=$15, cdm_revenue=$16, cdm_asset=$17, cdm_domain=$18, cdm_updated_at=now() where cdm_id=$19 RETURNING *',
-        params = [encryption.encrypt(contact.cdm_first_name),encryption.encrypt(contact.cdm_last_name),encryption.encrypt(contact.cdm_job_title),encryption.encrypt(contact.cdm_job_level),encryption.encrypt(contact.cdm_dept),encryption.encrypt(contact.cdm_email_id),encryption.encrypt(contact.cdm_mobile),encryption.encrypt(contact.cdm_company_name),encryption.encrypt(contact.cdm_address),encryption.encrypt(contact.cdm_city),encryption.encrypt(contact.cdm_state),encryption.encrypt(contact.cdm_postal_code),encryption.encrypt(contact.cdm_country),encryption.encrypt(contact.cdm_industry),encryption.encrypt(contact.cdm_company_size),encryption.encrypt(contact.cdm_revenue),encryption.encrypt(contact.cdm_asset),encryption.encrypt(contact.cdm_domain),id];
+        params = [encryption.encrypt(contact.cdm_first_name),encryption.encrypt(contact.cdm_last_name),encryption.encrypt(contact.titles.ctm_title),encryption.encrypt(contact.levels.cjlm_job_level),encryption.encrypt(contact.departments.cdm_department),encryption.encrypt(contact.cdm_email_id),encryption.encrypt(contact.cdm_mobile),encryption.encrypt(contact.companies.amcm_company),encryption.encrypt(contact.cdm_address),encryption.encrypt(contact.cdm_city),encryption.encrypt(contact.cdm_state),encryption.encrypt(contact.cdm_postal_code),encryption.encrypt(contact.cdm_country),encryption.encrypt(contact.industries.cim_industries),encryption.encrypt(contact.sizes.cesm_employee_size),encryption.encrypt(contact.revenues.crem_revenue),encryption.encrypt(contact.assets.cam_campaign_asset),encryption.encrypt(contact.domains.adcm_website),id];
     client.query(singleInsert, params, function (error, result) {
         results.push(result.rows[0]); // Will contain your inserted rows
 
