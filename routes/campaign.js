@@ -32,6 +32,226 @@ router.get('/:campaignId', oauth.authorise(), (req, res, next) => {
   });
 });
 
+router.get('/contact_name/:campaignId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id = req.params.campaignId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    // SQL Query > Select Data
+    const query = client.query('select * from campaign_contact_name_master where ccnm_cm_id=$1',[id]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
+router.get('/email/:campaignId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id = req.params.campaignId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    // SQL Query > Select Data
+    const query = client.query('select * from campaign_email_master where cem_cm_id=$1',[id]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
+router.get('/contact_number/:campaignId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id = req.params.campaignId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    // SQL Query > Select Data
+    const query = client.query('select * from campaign_contact_number_master where ccnm_cm_id=$1',[id]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
+
+router.get('/keyword_allow/:campaignId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id = req.params.campaignId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    // SQL Query > Select Data
+    const query = client.query('select * from campaign_keyword_allow_master where ckam_cm_id=$1',[id]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
+router.get('/keyword_disallow/:campaignId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id = req.params.campaignId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    // SQL Query > Select Data
+    const query = client.query('select * from campaign_keyword_disallow_master where ckdm_cm_id=$1',[id]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
+
+router.get('/location/:campaignId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id = req.params.campaignId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    // SQL Query > Select Data
+    const strqry = "select distinct(co.id) as country_id,co.sortname||' - '||co.name as country_name  from campaign_location_master clm "+
+                    "left outer join countries co on clm.clm_country_id = co.id "+
+                    "where clm.clm_cm_id=$1";
+    const query = client.query(strqry,[id]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
+router.post('/location/states', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    // SQL Query > Select Data
+    // const strqry = "select distinct(co.id) as country_id,co.sortname||' - '||co.name as country_name  from campaign_location_master clm "+
+    //                 "left outer join countries co on clm.clm_country_id = co.id "+
+    //                 "left outer join states st on clm.clm_state_id = st.id "+
+    //                 "where LOWER(co.name) "+
+    //                 "and clm.clm_cm_id=$2";
+
+    const strqry =  "select distinct(st.id) as state_id,st.name as state_name from states st "+
+                    "left outer join countries co on st.country_id = co.id "+
+                    "left outer join campaign_location_master clm on clm.clm_state_id = st.id "+
+                    "where clm.clm_cm_id=$1 "+
+                    "and st.country_id=$2";
+
+    const query = client.query(strqry,[req.body.cm_id, req.body.c_id]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
+router.post('/location/cities', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    // SQL Query > Select Data
+    // const strqry = "select distinct(co.id) as country_id,co.sortname||' - '||co.name as country_name  from campaign_location_master clm "+
+    //                 "left outer join countries co on clm.clm_country_id = co.id "+
+    //                 "left outer join states st on clm.clm_state_id = st.id "+
+    //                 "where LOWER(co.name) "+
+    //                 "and clm.clm_cm_id=$2";
+
+    const strqry =  "select distinct(ct.id) as city_id,ct.name as city_name from cities ct "+
+                    "left outer join states st on ct.state_id = st.id "+
+                    "left outer join campaign_location_master clm on clm.clm_city_id = ct.id "+
+                    "where clm.clm_cm_id=$1 "+
+                    "and ct.state_id=$2";
+
+    const query = client.query(strqry,[req.body.cm_id, req.body.s_id]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
+
 router.get('/account/:campaignId', oauth.authorise(), (req, res, next) => {
   const results = [];
   const id = req.params.campaignId;
@@ -296,29 +516,29 @@ router.get('/vertical/:campaignId', oauth.authorise(), (req, res, next) => {
   });
 });
 
-router.get('/geo/:campaignId', oauth.authorise(), (req, res, next) => {
-  const results = [];
-  const id = req.params.campaignId;
-  pool.connect(function(err, client, done){
-    if(err) {
-      done();
-      // pg.end();
-      console.log("the error is"+err);
-      return res.status(500).json({success: false, data: err});
-    }
-    // SQL Query > Select Data
-    const query = client.query('select * from campaign_geo_master where cgm_cm_id=$1',[id]);
-    query.on('row', (row) => {
-      results.push(row);
-    });
-    query.on('end', () => {
-      done();
-      // pg.end();
-      return res.json(results);
-    });
-  done(err);
-  });
-});
+// router.get('/geo/:campaignId', oauth.authorise(), (req, res, next) => {
+//   const results = [];
+//   const id = req.params.campaignId;
+//   pool.connect(function(err, client, done){
+//     if(err) {
+//       done();
+//       // pg.end();
+//       console.log("the error is"+err);
+//       return res.status(500).json({success: false, data: err});
+//     }
+//     // SQL Query > Select Data
+//     const query = client.query('select * from campaign_geo_master where cgm_cm_id=$1',[id]);
+//     query.on('row', (row) => {
+//       results.push(row);
+//     });
+//     query.on('end', () => {
+//       done();
+//       // pg.end();
+//       return res.json(results);
+//     });
+//   done(err);
+//   });
+// });
 
 router.get('/asset/:campaignId', oauth.authorise(), (req, res, next) => {
   const results = [];
@@ -368,29 +588,29 @@ router.get('/dept/:campaignId', oauth.authorise(), (req, res, next) => {
   });
 });
 
-router.get('/method/:campaignId', oauth.authorise(), (req, res, next) => {
-  const results = [];
-  const id = req.params.campaignId;
-  pool.connect(function(err, client, done){
-    if(err) {
-      done();
-      // pg.end();
-      console.log("the error is"+err);
-      return res.status(500).json({success: false, data: err});
-    }
-    // SQL Query > Select Data
-    const query = client.query('select * from campaign_method_master where cmm_cm_id=$1',[id]);
-    query.on('row', (row) => {
-      results.push(row);
-    });
-    query.on('end', () => {
-      done();
-      // pg.end();
-      return res.json(results);
-    });
-  done(err);
-  });
-});
+// router.get('/method/:campaignId', oauth.authorise(), (req, res, next) => {
+//   const results = [];
+//   const id = req.params.campaignId;
+//   pool.connect(function(err, client, done){
+//     if(err) {
+//       done();
+//       // pg.end();
+//       console.log("the error is"+err);
+//       return res.status(500).json({success: false, data: err});
+//     }
+//     // SQL Query > Select Data
+//     const query = client.query('select * from campaign_method_master where cmm_cm_id=$1',[id]);
+//     query.on('row', (row) => {
+//       results.push(row);
+//     });
+//     query.on('end', () => {
+//       done();
+//       // pg.end();
+//       return res.json(results);
+//     });
+//   done(err);
+//   });
+// });
 
 router.get('/revenue/:campaignId', oauth.authorise(), (req, res, next) => {
   const results = [];
@@ -443,11 +663,15 @@ router.get('/level/:campaignId', oauth.authorise(), (req, res, next) => {
 
 router.post('/add', oauth.authorise(), (req, res, next) => {
   const results = [];
+
+  console.log(req.body.campaign);
   const campaign=req.body.campaign;
   const accountList=req.body.accountList;
   const supressionList=req.body.supressionList;
   const allowDomainList=req.body.allowDomainList;
   const customQuestionList=req.body.customQuestionList;
+
+console.log(req.body.deniedDomainList);
   const deniedDomainList=req.body.deniedDomainList;
   const titleList = req.body.titleList;
   const industryList = req.body.industryList;
@@ -456,13 +680,23 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
   const domainList = req.body.domainList;
   const empsizeList = req.body.empsizeList;
   const verticalList = req.body.verticalList;
-  const geoList = req.body.geoList;
+  // const geoList = req.body.geoList;
   const campAssetList = req.body.campAssetList;
   const departmentList = req.body.departmentList;
-  const methodList = req.body.methodList;
-
+  // const methodList = req.body.methodList;
   const revenueList = req.body.revenueList;
   const levelList =  req.body.levelList;
+
+  const contactnameList =  req.body.contactnameList;
+  const emailList =  req.body.emailList;
+  const contactnumberList =  req.body.contactnumberList;
+
+  const locationList =  req.body.locationList;
+
+  const keyword_allowList =  req.body.keyword_allowList;
+  console.log(req.body.keyword_disallowList);
+  const keyword_disallowList =  req.body.keyword_disallowList;
+
   pool.connect(function(err, client, done){
     if(err) {
       done();
@@ -474,8 +708,12 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
 
       client.query('BEGIN;');
 
-    var singleInsert = "INSERT INTO campaign_master(cm_date,cm_first_dely,cm_end_date,cm_dely_frequency,cm_campaign_name,cm_restrict,cm_account_list,cm_supression_file,cm_domain_limit,cm_emp_size,cm_disqualifies,cm_title,cm_lead_count,cm_geo,cm_allow_domain,cm_revenue,cm_custom_question,cm_denied_domain,cm_campaign_asset,cm_industry,cm_dept,cm_method,cm_job,cm_vertical,cm_userid,cm_status) values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,0) RETURNING *",
-        params = [campaign.cm_date,campaign.cm_first_dely,campaign.cm_end_date,campaign.cm_dely_frequency,campaign.cm_campaign_name,campaign.cm_restriction,campaign.cm_account_list,campaign.cm_supression_file,campaign.cm_domain_limit,campaign.cm_emp_size,campaign.cm_disqualifies,campaign.cm_title,campaign.cm_lead_count,campaign.cm_geo,campaign.cm_allow_domain,campaign.cm_revenue,campaign.cm_custom_question,campaign.cm_denied_domain,campaign.cm_campaign_asset,campaign.cm_industry,campaign.cm_dept,campaign.cm_method,campaign.cm_job,campaign.cm_vertical,campaign.userid]
+    var singleInsert = "INSERT INTO campaign_master(cm_date,cm_first_dely,cm_end_date,cm_dely_frequency,cm_campaign_name,cm_comment,cm_restrict,cm_account_list,cm_supression_file,cm_domain_limit,cm_emp_size,cm_disqualifies,cm_title,cm_lead_count,cm_keyword_allow,cm_keyword_disallow,cm_allow_domain,cm_revenue,cm_custom_question,cm_denied_domain,cm_campaign_asset,cm_industry,cm_dept,cm_method,cm_job,cm_vertical,cm_contact_name,cm_email,cm_contact_number,cm_location,cm_userid,cm_status) values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,0) RETURNING *",
+        params = [campaign.cm_date,campaign.cm_first_dely,campaign.cm_end_date,campaign.cm_dely_frequency,campaign.cm_campaign_name,campaign.cm_comment,campaign.cm_restriction,campaign.cm_account_list,campaign.cm_supression_file,campaign.cm_domain_limit,campaign.cm_emp_size,campaign.cm_disqualifies,campaign.cm_title,campaign.cm_lead_count,campaign.cm_keyword_allow,campaign.cm_keyword_disallow,campaign.cm_allow_domain,campaign.cm_revenue,campaign.cm_custom_question,campaign.cm_denied_domain,campaign.cm_campaign_asset,campaign.cm_industry,campaign.cm_dept,campaign.cm_method,campaign.cm_job,campaign.cm_vertical,campaign.cm_contact_name,campaign.cm_email,campaign.cm_contact_number,campaign.cm_location,req.body.userid]
+    
+    // var singleInsert = "INSERT INTO campaign_master(cm_date,cm_campaign_name,cm_dely_frequency,cm_disqualifies,cm_lead_count,cm_userid,cm_status) values($1,$2,$3,$4,$5,$6,0) RETURNING *",
+    //     params = [campaign.cm_date,campaign.cm_campaign_name,campaign.cm_dely_frequency,campaign.cm_disqualifies,campaign.cm_lead_count,campaign.userid]
+    
     client.query(singleInsert, params, function (error, result) {
         results.push(result.rows[0]); // Will contain your inserted rows
 
@@ -483,122 +721,165 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
         if(campaign.cm_restriction == 'Yes')
         {
             restrictList.forEach(function(product,index){
-              client.query("INSERT into campaign_restriction_master(crm_cm_id,crm_restriction)values ($1,$2) RETURNING *",
-                [result.rows[0].cm_id,product.restriction]);
+              client.query("INSERT into campaign_restriction_master(crm_cm_id,crm_restriction,crm_userid)values ($1,$2,$3) RETURNING *",
+                [result.rows[0].cm_id,product.restriction,req.body.userid]);
             });
         }
         if(campaign.cm_account_list == 'Yes')
         {
           accountList.forEach(function(product,index){
-            client.query("INSERT into account_master_campaign_master(amcm_cm_id,amcm_company,amcm_website,amcm_userid,amcm_status)values ($1,$2,$3,$4,0) RETURNING *",
-              [result.rows[0].cm_id,product.company,product.website,product.userid]);
+            client.query("INSERT into account_master_campaign_master(amcm_cm_id,amcm_company,amcm_userid)values ($1,$2,$3) RETURNING *",
+              [result.rows[0].cm_id,product.company,req.body.userid]);
           });
         }
         if(campaign.cm_supression_file == 'Yes')
         {
           supressionList.forEach(function(product,index){
-            client.query("INSERT into suppression_campaign_master(scm_cm_id,scm_company,scm_website,scm_userid,scm_status)values ($1,$2,$3,$4,0) RETURNING *",
-              [result.rows[0].cm_id,product.company,product.website,product.userid]);
+            client.query("INSERT into suppression_campaign_master(scm_cm_id,scm_company,scm_userid)values ($1,$2,$3) RETURNING *",
+              [result.rows[0].cm_id,product.company,req.body.userid]);
           });
         }
         if(campaign.cm_domain_limit == 'Yes')
         {
           domainList.forEach(function(product,index){
-            client.query("INSERT into campaign_domainlimit_master(cdlm_cm_id,cdlm_domainlimit)values ($1,$2) RETURNING *",
-              [result.rows[0].cm_id,product.cdlm_domainlimit]);
+            client.query("INSERT into campaign_domainlimit_master(cdlm_cm_id,cdlm_domainlimit,cdlm_userid)values ($1,$2,$3) RETURNING *",
+              [result.rows[0].cm_id,product.cdlm_domainlimit,req.body.userid]);
           });
         }
         if(campaign.cm_emp_size == 'Yes')
         {
           empsizeList.forEach(function(product,index){
-            client.query("INSERT into campaign_employee_size_master(cesm_cm_id,cesm_employee_size)values ($1,$2) RETURNING *",
-              [result.rows[0].cm_id,product.employee_size]);
+            client.query("INSERT into campaign_employee_size_master(cesm_cm_id,cesm_employee_size,cesm_userid)values ($1,$2,$3) RETURNING *",
+              [result.rows[0].cm_id,product.employee_size,req.body.userid]);
           });
         }
         if(campaign.cm_title == 'Yes')
         {
           titleList.forEach(function(product,index){
             client.query("INSERT into campaign_title_master(ctm_cm_id,ctm_title,ctm_userid)values ($1,$2,$3) RETURNING *",
-              [result.rows[0].cm_id,product.titles,product.userid]);
+              [result.rows[0].cm_id,product.titles,req.body.userid]);
           });
         }
         if(campaign.cm_vertical == 'Yes')
         {
           verticalList.forEach(function(product,index){
-            client.query("INSERT into campaign_vertical_master(cvm_cm_id,cvm_verticals)values ($1,$2) RETURNING *",
-              [result.rows[0].cm_id,product.verticals]);
+            client.query("INSERT into campaign_vertical_master(cvm_cm_id,cvm_verticals,cvm_userid)values ($1,$2,$3) RETURNING *",
+              [result.rows[0].cm_id,product.verticals,req.body.userid]);
           });
         }
-        if(campaign.cm_geo == 'Yes')
-        {
-          geoList.forEach(function(product,index){
-            client.query("INSERT into campaign_geo_master(cgm_cm_id,cgm_geo)values ($1,$2) RETURNING *",
-              [result.rows[0].cm_id,product.geo]);
-          });
-        }
+        // if(campaign.cm_geo == 'Yes')
+        // {
+        //   geoList.forEach(function(product,index){
+        //     client.query("INSERT into campaign_geo_master(cgm_cm_id,cgm_geo,cgm_userid)values ($1,$2,$3) RETURNING *",
+        //       [result.rows[0].cm_id,product.geo,req.body.userid]);
+        //   });
+        // }
         if(campaign.cm_allow_domain == 'Yes')
         {
           allowDomainList.forEach(function(product,index){
-            client.query("INSERT into allow_domain_campaign_master(adcm_cm_id,adcm_website,adcm_userid,adcm_status)values ($1,$2,$3,0) RETURNING *",
-              [result.rows[0].cm_id,product.adcm_website,product.userid]);
+            client.query("INSERT into allow_domain_campaign_master(adcm_cm_id,adcm_website,adcm_userid)values ($1,$2,$3) RETURNING *",
+              [result.rows[0].cm_id,product.adcm_website,req.body.userid]);
           });
         }
         if(campaign.cm_revenue == 'Yes')
         {
           revenueList.forEach(function(product,index){
-          client.query("INSERT into campaign_revenue_master(crem_cm_id,crem_revenue)values ($1,$2) RETURNING *",
-            [result.rows[0].cm_id,product.revenues]);
-        });
+          client.query("INSERT into campaign_revenue_master(crem_cm_id,crem_revenue,crem_userid)values ($1,$2,$3) RETURNING *",
+              [result.rows[0].cm_id,product.revenues,req.body.userid]);
+          });
         }
         if(campaign.cm_custom_question == 'Yes')
         {
           customQuestionList.forEach(function(product,index){
-            client.query("INSERT into custom_question_campaign_master(cmcm_cm_id,cmcm_question,cmcm_answer,cmcm_userid,cmcm_status)values ($1,$2,$3,$4,0) RETURNING *",
-              [result.rows[0].cm_id,product.question,product.answer,product.userid]);
+            client.query("INSERT into custom_question_campaign_master(cmcm_cm_id,cmcm_question,cmcm_answer,cmcm_userid)values ($1,$2,$3,$4) RETURNING *",
+              [result.rows[0].cm_id,product.question,product.answer,req.body.userid]);
           });
         }
         if(campaign.cm_denied_domain == 'Yes')
         {
           deniedDomainList.forEach(function(product,index){
-            client.query("INSERT into denied_domain_campaign_master(ddcm_cm_id,ddcm_website,ddcm_userid,ddcm_status)values ($1,$2,$3,0) RETURNING *",
-              [result.rows[0].cm_id,product.ddcm_website,product.userid]);
+            client.query("INSERT into denied_domain_campaign_master(ddcm_cm_id,ddcm_website,ddcm_userid)values ($1,$2,$3) RETURNING *",
+              [result.rows[0].cm_id,product.ddcm_website,req.body.userid]);
           });
         }
         if(campaign.cm_campaign_asset == 'Yes')
         {
           campAssetList.forEach(function(product,index){
-            client.query("INSERT into campaign_asset_master(cam_cm_id,cam_campaign_asset)values ($1,$2) RETURNING *",
-              [result.rows[0].cm_id,product.asset]);
+            client.query("INSERT into campaign_asset_master(cam_cm_id,cam_campaign_asset,cam_userid)values ($1,$2,$3) RETURNING *",
+              [result.rows[0].cm_id,product.asset,req.body.userid]);
           });
         }
         if(campaign.cm_industry == 'Yes')
         {
           industryList.forEach(function(product,index){
             client.query("INSERT into campaign_industry_master(cim_cm_id,cim_industries,cim_userid)values ($1,$2,$3) RETURNING *",
-              [result.rows[0].cm_id,product.industries,product.userid]);
+              [result.rows[0].cm_id,product.industries,req.body.userid]);
           });
         }
         if(campaign.cm_dept == 'Yes')
         {
           departmentList.forEach(function(product,index){
-            client.query("INSERT into campaign_department_master(cdm_cm_id,cdm_department)values ($1,$2) RETURNING *",
-              [result.rows[0].cm_id,product.department]);
+            client.query("INSERT into campaign_department_master(cdm_cm_id,cdm_department,cdm_userid)values ($1,$2,$3) RETURNING *",
+              [result.rows[0].cm_id,product.department,req.body.userid]);
           });
         }
-        if(campaign.cm_method == 'Yes')
-        {
-          methodList.forEach(function(product,index){
-            client.query("INSERT into campaign_method_master(cmm_cm_id,cmm_method)values ($1,$2) RETURNING *",
-              [result.rows[0].cm_id,product.methodss]);
-          });
-        }
+        // if(campaign.cm_method == 'Yes')
+        // {
+        //   methodList.forEach(function(product,index){
+        //     client.query("INSERT into campaign_method_master(cmm_cm_id,cmm_method,cmm_userid)values ($1,$2,$3) RETURNING *",
+        //       [result.rows[0].cm_id,product.methodss,req.body.userid]);
+        //   });
+        // }
         if(campaign.cm_job == 'Yes')
         {
           levelList.forEach(function(product,index){
-            client.query("INSERT into campaign_joblevel_master(cjlm_cm_id,cjlm_job_level)values ($1,$2) RETURNING *",
-              [result.rows[0].cm_id,product.job_level]);
+            client.query("INSERT into campaign_joblevel_master(cjlm_cm_id,cjlm_job_level,cjlm_userid)values ($1,$2,$3) RETURNING *",
+              [result.rows[0].cm_id,product.job_level,req.body.userid]);
           });
         }
+        if(campaign.cm_contact_name == 'Yes')
+        {
+          contactnameList.forEach(function(product,index){
+            client.query("INSERT into campaign_contact_name_master(ccnm_cm_id,ccnm_first_name,ccnm_last_name,ccnm_userid)values ($1,$2,$3,$4) RETURNING *",
+              [result.rows[0].cm_id,product.first_name,product.last_name,req.body.userid]);
+          });
+        }
+
+        if(campaign.cm_email == 'Yes')
+        {
+          emailList.forEach(function(product,index){
+            client.query("INSERT into campaign_email_master(cem_cm_id,cem_email,cem_userid)values ($1,$2,$3) RETURNING *",
+              [result.rows[0].cm_id,product.email,req.body.userid]);
+          });
+        }
+        if(campaign.cm_contact_number == 'Yes')
+        {
+          contactnumberList.forEach(function(product,index){
+            client.query("INSERT into campaign_contact_number_master(ccnm_cm_id,ccnm_contact_number,ccnm_userid)values ($1,$2,$3) RETURNING *",
+              [result.rows[0].cm_id,product.contact_number,req.body.userid]);
+          });
+        }
+        if(campaign.cm_location == 'Yes')
+        {
+          locationList.forEach(function(product,index){
+              client.query("INSERT into campaign_location_master(clm_cm_id,clm_country_id,clm_state_id,clm_city_id,clm_userid)values ($1,$2,$3,$4,$5) RETURNING *",
+                [result.rows[0].cm_id,product.country.id,product.s_state,product.c_city,req.body.userid]);
+          });
+        }
+        // if(campaign.cm_keyword_allow == 'Yes')
+        // {
+        //   keyword_allowList.forEach(function(product,index){
+        //   client.query("INSERT into campaign_keyword_allow_master(ckam_cm_id,ckam_keyword_allow,ckam_userid)values ($1,$2,$3) RETURNING *",
+        //       [result.rows[0].cm_id,product.keyword_allow,req.body.userid]);
+        //   });
+        // }
+        // if(campaign.cm_keyword_disallow == 'Yes')
+        // {
+        //   keyword_disallowList.forEach(function(product,index){
+        //   client.query("INSERT into campaign_keyword_disallow_master(ckdm_cm_id,ckdm_keyword_disallow,ckdm_userid)values ($1,$2,$3) RETURNING *",
+        //       [result.rows[0].cm_id,product.keyword_disallow,req.body.userid]);
+        //   });
+        // }
 
       client.query('COMMIT;');
         done();
@@ -625,10 +906,10 @@ router.post('/edit/:campaignId', oauth.authorise(), (req, res, next) => {
   const domainList = req.body.domainList;
   const empsizeList = req.body.empsizeList;
   const verticalList = req.body.verticalList;
-  const geoList = req.body.geoList;
+  // const geoList = req.body.geoList;
   const campAssetList = req.body.campAssetList;
   const departmentList = req.body.departmentList;
-  const methodList = req.body.methodList;
+  // const methodList = req.body.methodList;
 
   const revenueList = req.body.revenueList;
   const levelList =  req.body.levelList;
@@ -713,14 +994,14 @@ router.post('/edit/:campaignId', oauth.authorise(), (req, res, next) => {
           });
         }
 
-        client.query('delete from public.campaign_geo_master where cgm_cm_id=$1', [id]);
-        if(campaign.cm_geo == 'Yes')
-        {
-          geoList.forEach(function(product,index){
-            client.query("INSERT into campaign_geo_master(cgm_cm_id,cgm_geo)values ($1,$2) RETURNING *",
-              [result.rows[0].cm_id,product.geo]);
-          });
-        }
+        // client.query('delete from public.campaign_geo_master where cgm_cm_id=$1', [id]);
+        // if(campaign.cm_geo == 'Yes')
+        // {
+        //   geoList.forEach(function(product,index){
+        //     client.query("INSERT into campaign_geo_master(cgm_cm_id,cgm_geo)values ($1,$2) RETURNING *",
+        //       [result.rows[0].cm_id,product.geo]);
+        //   });
+        // }
 
         client.query('delete from public.allow_domain_campaign_master where adcm_cm_id=$1', [id]);
         if(campaign.cm_allow_domain == 'Yes')
@@ -785,14 +1066,14 @@ router.post('/edit/:campaignId', oauth.authorise(), (req, res, next) => {
           });
         }
 
-        client.query('delete from public.campaign_method_master where cmm_cm_id=$1', [id]);
-        if(campaign.cm_method == 'Yes')
-        {
-          methodList.forEach(function(product,index){
-            client.query("INSERT into campaign_method_master(cmm_cm_id,cmm_method)values ($1,$2) RETURNING *",
-              [result.rows[0].cm_id,product.methodss]);
-          });
-        }
+        // client.query('delete from public.campaign_method_master where cmm_cm_id=$1', [id]);
+        // if(campaign.cm_method == 'Yes')
+        // {
+        //   methodList.forEach(function(product,index){
+        //     client.query("INSERT into campaign_method_master(cmm_cm_id,cmm_method)values ($1,$2) RETURNING *",
+        //       [result.rows[0].cm_id,product.methodss]);
+        //   });
+        // }
 
         client.query('delete from public.campaign_joblevel_master where cjlm_cm_id=$1', [id]);
         if(campaign.cm_job == 'Yes')
@@ -1148,29 +1429,29 @@ router.get('/verticalview/:campaignId', oauth.authorise(), (req, res, next) => {
   });
 });
 
-router.get('/geoview/:campaignId', oauth.authorise(), (req, res, next) => {
-  const results = [];
-  const id=req.params.campaignId;
-  pool.connect(function(err, client, done){
-    if(err) {
-      done();
-      // pg.end();
-      console.log("the error is"+err);
-      return res.status(500).json({success: false, data: err});
-    }
-    const query = client.query("SELECT * FROM campaign_geo_master where cgm_cm_id=$1",[id]);
-    query.on('row', (row) => {
-      results.push(row);
+// router.get('/geoview/:campaignId', oauth.authorise(), (req, res, next) => {
+//   const results = [];
+//   const id=req.params.campaignId;
+//   pool.connect(function(err, client, done){
+//     if(err) {
+//       done();
+//       // pg.end();
+//       console.log("the error is"+err);
+//       return res.status(500).json({success: false, data: err});
+//     }
+//     const query = client.query("SELECT * FROM campaign_geo_master where cgm_cm_id=$1",[id]);
+//     query.on('row', (row) => {
+//       results.push(row);
 
-    });
-    query.on('end', () => {
-      done();
-      // pg.end();
-      return res.json(results);
-    });
-  done(err);
-  });
-});
+//     });
+//     query.on('end', () => {
+//       done();
+//       // pg.end();
+//       return res.json(results);
+//     });
+//   done(err);
+//   });
+// });
 
 router.get('/assetview/:campaignId', oauth.authorise(), (req, res, next) => {
   const results = [];
@@ -1220,29 +1501,29 @@ router.get('/deptview/:campaignId', oauth.authorise(), (req, res, next) => {
   });
 });
 
-router.get('/methodview/:campaignId', oauth.authorise(), (req, res, next) => {
-  const results = [];
-  const id=req.params.campaignId;
-  pool.connect(function(err, client, done){
-    if(err) {
-      done();
-      // pg.end();
-      console.log("the error is"+err);
-      return res.status(500).json({success: false, data: err});
-    }
-    const query = client.query("SELECT * FROM campaign_method_master where cmm_cm_id=$1",[id]);
-    query.on('row', (row) => {
-      results.push(row);
+// router.get('/methodview/:campaignId', oauth.authorise(), (req, res, next) => {
+//   const results = [];
+//   const id=req.params.campaignId;
+//   pool.connect(function(err, client, done){
+//     if(err) {
+//       done();
+//       // pg.end();
+//       console.log("the error is"+err);
+//       return res.status(500).json({success: false, data: err});
+//     }
+//     const query = client.query("SELECT * FROM campaign_method_master where cmm_cm_id=$1",[id]);
+//     query.on('row', (row) => {
+//       results.push(row);
 
-    });
-    query.on('end', () => {
-      done();
-      // pg.end();
-      return res.json(results);
-    });
-  done(err);
-  });
-});
+//     });
+//     query.on('end', () => {
+//       done();
+//       // pg.end();
+//       return res.json(results);
+//     });
+//   done(err);
+//   });
+// });
 
 router.get('/revenueview/:campaignId', oauth.authorise(), (req, res, next) => {
   const results = [];
@@ -1279,6 +1560,30 @@ router.get('/levelview/:campaignId', oauth.authorise(), (req, res, next) => {
       return res.status(500).json({success: false, data: err});
     }
     const query = client.query("SELECT * FROM campaign_joblevel_master where cjlm_cm_id=$1",[id]);
+    query.on('row', (row) => {
+      results.push(row);
+
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
+router.get('/contactnameview/:campaignId', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  const id=req.params.campaignId;
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    const query = client.query("SELECT * FROM campaign_contact_name_master where ccnm_cm_id=$1",[id]);
     query.on('row', (row) => {
       results.push(row);
 
@@ -1380,6 +1685,308 @@ router.post('/typeahead/search', oauth.authorise(), (req, res, next) => {
                     "order by cm.cm_id desc LIMIT 10";
 
     const query = client.query(strqry,[str]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+    done(err);
+  });
+});
+
+router.post('/firstlastname/typeahead/search', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    const str = "%"+req.body.search+"%";
+    // SQL Query > Select Data
+
+    const strqry =  "SELECT * "+
+                    "FROM campaign_contact_name_master con "+
+                    "inner join campaign_master cm on con.ccnm_cm_id=cm.cm_id "+
+                    "where con.ccnm_cm_id = $1 "+
+                    "and LOWER(ccnm_first_name) LIKE LOWER($2) "+
+                    "and LOWER(ccnm_last_name) LIKE LOWER($3) ";
+
+    const query = client.query(strqry,[req.body.cdm_cm_id.cm_id,req.body.cdm_first_name,req.body.cdm_last_name]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+    done(err);
+  });
+});
+
+
+router.post('/email/typeahead/search', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    const str = "%"+req.body.search+"%";
+    // SQL Query > Select Data
+
+    const strqry =  "SELECT * "+
+                    "FROM campaign_email_master con "+
+                    "inner join campaign_master cm on con.cem_cm_id=cm.cm_id "+
+                    "where con.cem_cm_id = $1 "+
+                    "and LOWER(cem_email) LIKE LOWER($2) ";
+                    // "and LOWER(ccnm_last_name) LIKE LOWER($3) ";
+
+    const query = client.query(strqry,[req.body.cdm_cm_id.cm_id,req.body.cdm_email]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+    done(err);
+  });
+});
+
+
+router.post('/contact_number/typeahead/search', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    const str = "%"+req.body.search+"%";
+    // SQL Query > Select Data
+
+    const strqry =  "SELECT * "+
+                    "FROM campaign_contact_number_master con "+
+                    "inner join campaign_master cm on con.ccnm_cm_id=cm.cm_id "+
+                    "where con.ccnm_cm_id = $1 "+
+                    "and LOWER(ccnm_contact_number) LIKE LOWER($2) ";
+                    // "and LOWER(ccnm_last_name) LIKE LOWER($3) ";
+
+    const query = client.query(strqry,[req.body.cdm_cm_id.cm_id,req.body.cdm_contact_number]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+    done(err);
+  });
+});
+
+
+router.post('/company_name_supp/typeahead/search', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    const str = "%"+req.body.search+"%";
+    // SQL Query > Select Data
+
+    const strqry =  "SELECT * "+
+                    "FROM suppression_campaign_master con "+
+                    "inner join campaign_master cm on con.scm_cm_id=cm.cm_id "+
+                    "where con.scm_cm_id = $1 "+
+                    "and LOWER(scm_company) LIKE LOWER($2) ";
+                    // "and LOWER(ccnm_last_name) LIKE LOWER($3) ";
+
+    const query = client.query(strqry,[req.body.cdm_cm_id.cm_id,req.body.cdm_company_name]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+    done(err);
+  });
+});
+
+
+router.post('/company_name_account/typeahead/search', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    const str = "%"+req.body.search+"%";
+    // SQL Query > Select Data
+
+    const strqry =  "SELECT * "+
+                    "FROM account_master_campaign_master con "+
+                    "inner join campaign_master cm on con.amcm_cm_id=cm.cm_id "+
+                    "where con.amcm_cm_id = $1 "+
+                    "and LOWER(amcm_company) LIKE LOWER($2) ";
+                    // "and LOWER(ccnm_last_name) LIKE LOWER($3) ";
+
+    const query = client.query(strqry,[req.body.cdm_cm_id.cm_id,req.body.cdm_company_name]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+    done(err);
+  });
+});
+
+
+
+router.post('/allow_domain/typeahead/search', oauth.authorise(), (req, res, next) => {
+
+  var email = req.body.cdm_email.toLowerCase();
+  var name = email.split('@');
+  
+  const results = [];
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    const str = "%"+req.body.search+"%";
+    // SQL Query > Select Data
+
+    const strqry =  "SELECT * "+
+                    "FROM allow_domain_campaign_master con "+
+                    "inner join campaign_master cm on con.adcm_cm_id=cm.cm_id "+
+                    "where con.adcm_cm_id = $1 "+
+                    "and LOWER(adcm_website) LIKE LOWER($2) ";
+                    // "and LOWER(ccnm_last_name) LIKE LOWER($3) ";
+
+    const query = client.query(strqry,[req.body.cdm_cm_id.cm_id,name[1]]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+    done(err);
+  });
+});
+
+router.post('/denied_domain/typeahead/search', oauth.authorise(), (req, res, next) => {
+  var email = req.body.cdm_email.toLowerCase();
+  var name = email.split('@');
+
+  const results = [];
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    const str = "%"+req.body.search+"%";
+    // SQL Query > Select Data
+
+    const strqry =  "SELECT * "+
+                    "FROM denied_domain_campaign_master con "+
+                    "inner join campaign_master cm on con.ddcm_cm_id=cm.cm_id "+
+                    "where con.ddcm_cm_id = $1 "+
+                    "and LOWER(ddcm_website) LIKE LOWER($2) ";
+                    // "and LOWER(ccnm_last_name) LIKE LOWER($3) ";
+
+    const query = client.query(strqry,[req.body.cdm_cm_id.cm_id,name[1]]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+    done(err);
+  });
+});
+
+router.post('/allowed_domain_name/typeahead/search', oauth.authorise(), (req, res, next) => {
+
+  const results = [];
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    const str = "%"+req.body.search+"%";
+    // SQL Query > Select Data
+
+    const strqry =  "SELECT * "+
+                    "FROM allow_domain_campaign_master con "+
+                    "inner join campaign_master cm on con.adcm_cm_id=cm.cm_id "+
+                    "where con.adcm_cm_id = $1 "+
+                    "and LOWER(adcm_website) LIKE LOWER($2) ";
+                    // "and LOWER(ccnm_last_name) LIKE LOWER($3) ";
+
+    const query = client.query(strqry,[req.body.cdm_cm_id.cm_id,req.body.cdm_domain]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+    done(err);
+  });
+});
+
+router.post('/denied_domain_name/typeahead/search', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    const str = "%"+req.body.search+"%";
+    // SQL Query > Select Data
+
+    const strqry =  "SELECT * "+
+                    "FROM denied_domain_campaign_master con "+
+                    "inner join campaign_master cm on con.ddcm_cm_id=cm.cm_id "+
+                    "where con.ddcm_cm_id = $1 "+
+                    "and LOWER(ddcm_website) LIKE LOWER($2) ";
+                    // "and LOWER(ccnm_last_name) LIKE LOWER($3) ";
+
+    const query = client.query(strqry,[req.body.cdm_cm_id.cm_id,req.body.cdm_domain]);
     query.on('row', (row) => {
       results.push(row);
     });

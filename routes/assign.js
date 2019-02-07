@@ -153,8 +153,6 @@ router.post('/edit/:campaignId', oauth.authorise(), (req, res, next) => {
   const results = [];
   const id = req.params.campaignId;
   const employee=req.body.employee;
-  const remove=req.body.remove;
-  const newemp=req.body.newemp;
   pool.connect(function(err, client, done){
     if(err) {
       done();
@@ -163,21 +161,18 @@ router.post('/edit/:campaignId', oauth.authorise(), (req, res, next) => {
       return res.status(500).json({success: false, contact: err});
     }
     client.query('BEGIN;');
-    employee.forEach(function(val,key){
-    var singleInsert = 'update campaign_employee_master set cem_cm_id=$1, cem_emp_id=$2 where cem_id=$3 RETURNING *',
-        params = [val.cem_cm_id,val.emp_id,val.cem_id];
+
+    client.query("delete from campaign_employee_master where cem_cm_id=$1",[id]);
+
+    employee.forEach(function(value,key){
+    var singleInsert = 'INSERT INTO campaign_employee_master(cem_cm_id,cem_emp_id) VALUES ($1,$2) RETURNING *',
+        params = [id,value.emp_id];
         
     client.query(singleInsert, params, function (error, result) {
       
         results.push(result.rows[0]); // Will contain your inserted rows
       });
     });
-        remove.forEach(function(val,index){
-          client.query("delete from campaign_employee_master where cem_id=$1",[val.cem_id]);
-        });
-        newemp.forEach(function(value,key){
-          client.query('INSERT INTO campaign_employee_master(cem_cm_id,cem_emp_id) VALUES ($1,$2)',[id,value.emp_id]);
-        });
     client.query('COMMIT;');
         done();
         return res.json(results);
