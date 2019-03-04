@@ -38,6 +38,7 @@ router.get('/', oauth.authorise(), (req, res, next) => {
       row.cdm_revenue=encryption.decrypt(row.cdm_revenue);
       row.cdm_asset=encryption.decrypt(row.cdm_asset);
       row.cdm_domain=encryption.decrypt(row.cdm_domain);
+      row.cdm_ip_address=encryption.decrypt(row.cdm_ip_address);
       results.push(row);
     });
     query.on('end', () => {
@@ -79,6 +80,7 @@ router.get('/:jobId', oauth.authorise(), (req, res, next) => {
       row.cdm_revenue=encryption.decrypt(row.cdm_revenue);
       row.cdm_asset=encryption.decrypt(row.cdm_asset);
       row.cdm_domain=encryption.decrypt(row.cdm_domain);
+      row.cdm_ip_address=encryption.decrypt(row.cdm_ip_address);
       results.push(row);
     });
     query.on('end', () => {
@@ -512,10 +514,82 @@ router.post('/check/AllDomain/:campaignId', oauth.authorise(), (req, res, next) 
 });
 
 
+router.post('/getcountryname', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  // console.log(req.body);
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    const query = client.query("SELECT *, sortname||' - '||name as c_search FROM countries where name=$1 ",[req.body.cdm_country]);
+    query.on('row', (row) => {
+      console.log(row);
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
+router.post('/getstatename', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  // console.log(req.body);
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    const query = client.query("SELECT *, name as state_name FROM states where name=$1 ",[req.body.cdm_state]);
+    query.on('row', (row) => {
+      console.log(row);
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
+router.post('/getcityname', oauth.authorise(), (req, res, next) => {
+  const results = [];
+  // console.log(req.body);
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    const query = client.query("SELECT *, name as city_name FROM cities where name=$1 ",[req.body.cdm_city]);
+    query.on('row', (row) => {
+      console.log(row);
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+  done(err);
+  });
+});
+
 router.post('/add', oauth.authorise(), (req, res, next) => {
   const results = [];
 
-  console.log(req.body.contact);
+  console.log(req.body.contact.country.cdm_country);
   const contact=req.body.contact;
   const user = req.body.userid;
   pool.connect(function(err, client, done){
@@ -527,8 +601,12 @@ router.post('/add', oauth.authorise(), (req, res, next) => {
     }
     client.query('BEGIN;');
 
-       var singleInsert = "INSERT INTO contact_discovery_master(cdm_cm_id,cdm_mobile,cdm_first_name,cdm_last_name,cdm_job_title,cdm_job_level,cdm_dept,cdm_email_id,cdm_company_name,cdm_address,cdm_city,cdm_state,cdm_postal_code,cdm_country,cdm_industry,cdm_company_size,cdm_revenue,cdm_asset,cdm_domain,cdm_userid,cdm_status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,0) RETURNING *",
-        params = [contact.cdm_cm_id.cm_id,encryption.encrypt(contact.cdm_contact_number),encryption.encrypt(contact.cdm_first_name),encryption.encrypt(contact.cdm_last_name),encryption.encrypt(contact.cdm_job_title),encryption.encrypt(contact.levels.cjlm_job_level),encryption.encrypt(contact.departments.cdm_department),encryption.encrypt(contact.cdm_email),encryption.encrypt(contact.companies.amcm_company),encryption.encrypt(contact.cdm_address),encryption.encrypt(contact.city.city_name),encryption.encrypt(contact.state.state_name),encryption.encrypt(contact.cdm_postal_code),encryption.encrypt(contact.country.country_name),encryption.encrypt(contact.industries.cim_industries),encryption.encrypt(contact.sizes.cesm_employee_size),encryption.encrypt(contact.revenues.crem_revenue),encryption.encrypt(contact.assets.cam_campaign_asset),encryption.encrypt(contact.domains.adcm_website),user]
+       // var singleInsert = "INSERT INTO contact_discovery_master(cdm_cm_id,cdm_mobile,cdm_first_name,cdm_last_name,cdm_job_title,cdm_job_level,cdm_dept,cdm_email_id,cdm_company_name,cdm_address,cdm_city,cdm_state,cdm_postal_code,cdm_country,cdm_industry,cdm_company_size,cdm_revenue,cdm_asset,cdm_domain,cdm_ip_address,cdm_userid,cdm_status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,0) RETURNING *",
+       //  params = [contact.cdm_cm_id.cm_id,encryption.encrypt(contact.cdm_contact_number),encryption.encrypt(contact.cdm_first_name),encryption.encrypt(contact.cdm_last_name),encryption.encrypt(contact.cdm_job_title),encryption.encrypt(contact.levels.cjlm_job_level),encryption.encrypt(contact.departments.cdm_department),encryption.encrypt(contact.cdm_email),encryption.encrypt(contact.cdm_company_name),encryption.encrypt(contact.cdm_address),encryption.encrypt(contact.city.city_name),encryption.encrypt(contact.state.state_name),encryption.encrypt(contact.cdm_postal_code),encryption.encrypt(contact.country.country_name),encryption.encrypt(contact.industries.cim_industries),encryption.encrypt(contact.sizes.cesm_employee_size),encryption.encrypt(contact.revenues.crem_revenue),encryption.encrypt(contact.assets.cam_campaign_asset),encryption.encrypt(contact.cdm_domain),encryption.encrypt(contact.cdm_ip_address),user]
+       
+        var singleInsert = "INSERT INTO contact_discovery_master(cdm_cm_id,cdm_mobile,cdm_first_name,cdm_last_name,cdm_job_title,cdm_job_level,cdm_dept,cdm_email_id,cdm_company_name,cdm_address,cdm_city,cdm_state,cdm_postal_code,cdm_country,cdm_industry,cdm_company_size,cdm_revenue,cdm_asset,cdm_domain,cdm_ip_address,cdm_userid,cdm_status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,0) RETURNING *",
+        params = [contact.cdm_cm_id.cm_id,encryption.encrypt(contact.cdm_contact_number),encryption.encrypt(contact.cdm_first_name),encryption.encrypt(contact.cdm_last_name),encryption.encrypt(contact.cdm_job_title),encryption.encrypt(contact.levels.cjlm_job_level),encryption.encrypt(contact.departments.cdm_department),encryption.encrypt(contact.cdm_email),encryption.encrypt(contact.cdm_company_name),encryption.encrypt(contact.cdm_address),encryption.encrypt(contact.city.city_name),encryption.encrypt(contact.state.state_name),encryption.encrypt(contact.cdm_postal_code),encryption.encrypt(contact.country.c_search),encryption.encrypt(contact.industries.cim_industries),encryption.encrypt(contact.sizes.cesm_employee_size),encryption.encrypt(contact.revenues.crem_revenue),encryption.encrypt(contact.assets.cam_campaign_asset),encryption.encrypt(contact.cdm_domain),encryption.encrypt(contact.cdm_ip_address),user]
+       
         client.query(singleInsert, params, function (error, result) {
         results.push(result.rows[0]);// Will contain your inserted rows
       
@@ -555,8 +633,8 @@ router.post('/import', oauth.authorise(), (req, res, next) => {
     }
     client.query('BEGIN;');
         contact.forEach(function(val,key){
-          var singleInsert = "INSERT INTO contact_discovery_master(cdm_mobile,cdm_first_name,cdm_last_name,cdm_job_title,cdm_job_level,cdm_dept,cdm_email_id,cdm_company_name,cdm_address,cdm_postal_code,cdm_city,cdm_state,cdm_country,cdm_industry,cdm_company_size,cdm_revenue,cdm_asset,cdm_domain,call_status,cdm_userid,cdm_status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,0) RETURNING *",
-        params = [encryption.encrypt(val.no),encryption.encrypt(val.First_Name),encryption.encrypt(val.Last_Name),encryption.encrypt(val.Job_Title),encryption.encrypt(val.Job_Level),encryption.encrypt(val.Department),encryption.encrypt(val.Email_Id),encryption.encrypt(val.Company_Name),encryption.encrypt(val.Address),encryption.encrypt(val.postal_code),encryption.encrypt(val.City),encryption.encrypt(val.State),encryption.encrypt(val.Countryt),encryption.encrypt(val.Industry),encryption.encrypt(val.Company_Size),encryption.encrypt(val.Revenue),encryption.encrypt(val.Asset),encryption.encrypt(val.Domain),val.Status,userid]
+          var singleInsert = "INSERT INTO contact_discovery_master(cdm_mobile,cdm_first_name,cdm_last_name,cdm_job_title,cdm_job_level,cdm_dept,cdm_email_id,cdm_company_name,cdm_address,cdm_postal_code,cdm_city,cdm_state,cdm_country,cdm_industry,cdm_company_size,cdm_revenue,cdm_asset,cdm_domain,cdm_ip_address,call_status,cdm_userid,cdm_status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,0) RETURNING *",
+        params = [encryption.encrypt(val.no),encryption.encrypt(val.First_Name),encryption.encrypt(val.Last_Name),encryption.encrypt(val.Job_Title),encryption.encrypt(val.Job_Level),encryption.encrypt(val.Department),encryption.encrypt(val.Email_Id),encryption.encrypt(val.Company_Name),encryption.encrypt(val.Address),encryption.encrypt(val.postal_code),encryption.encrypt(val.City),encryption.encrypt(val.State),encryption.encrypt(val.Countryt),encryption.encrypt(val.Industry),encryption.encrypt(val.Company_Size),encryption.encrypt(val.Revenue),encryption.encrypt(val.Asset),encryption.encrypt(val.Domain),encryption.encrypt(val.ip_address),val.Status,userid]
         
         client.query(singleInsert, params, function (error, result) {
         results.push(result.rows[0]);// Will contain your inserted rows
@@ -564,13 +642,11 @@ router.post('/import', oauth.authorise(), (req, res, next) => {
           /*client.query('update contact_discovery_master set cdm_status=1, cdm_updated_at=now() where cdm_id=$1 RETURNING *',[val.cdm_id])
         */
       });
+    });     
+        
         client.query('COMMIT;');
         done();
         return res.json(results);
-    });
-        
-       
-        
     done(err);
   });
 });
@@ -579,6 +655,7 @@ router.post('/edit/:jobId', oauth.authorise(), (req, res, next) => {
   const results = [];
   const id = req.params.jobId;
   const contact=req.body.contact;
+
   pool.connect(function(err, client, done){
     if(err) {
       done();
@@ -588,8 +665,8 @@ router.post('/edit/:jobId', oauth.authorise(), (req, res, next) => {
     }
     client.query('BEGIN;');
     
-    var singleInsert = 'update contact_discovery_master set cdm_first_name=$1, cdm_last_name=$2, cdm_job_title=$3, cdm_job_level=$4, cdm_dept=$5, cdm_email_id=$6, cdm_mobile=$7, cdm_company_name=$8, cdm_address=$9, cdm_city=$10, cdm_state=$11, cdm_postal_code=$12, cdm_country=$13, cdm_industry=$14, cdm_company_size=$15, cdm_revenue=$16, cdm_asset=$17, cdm_domain=$18, cdm_updated_at=now() where cdm_id=$19 RETURNING *',
-        params = [encryption.encrypt(contact.cdm_first_name),encryption.encrypt(contact.cdm_last_name),encryption.encrypt(contact.titles.ctm_title),encryption.encrypt(contact.levels.cjlm_job_level),encryption.encrypt(contact.departments.cdm_department),encryption.encrypt(contact.cdm_email_id),encryption.encrypt(contact.cdm_mobile),encryption.encrypt(contact.companies.amcm_company),encryption.encrypt(contact.cdm_address),encryption.encrypt(contact.cdm_city),encryption.encrypt(contact.cdm_state),encryption.encrypt(contact.cdm_postal_code),encryption.encrypt(contact.country.cgm_geo),encryption.encrypt(contact.industries.cim_industries),encryption.encrypt(contact.sizes.cesm_employee_size),encryption.encrypt(contact.revenues.crem_revenue),encryption.encrypt(contact.assets.cam_campaign_asset),encryption.encrypt(contact.domains.adcm_website),id];
+    var singleInsert = 'update contact_discovery_master set cdm_first_name=$1, cdm_last_name=$2, cdm_job_title=$3, cdm_job_level=$4, cdm_dept=$5, cdm_email_id=$6, cdm_mobile=$7, cdm_company_name=$8, cdm_address=$9, cdm_city=$10, cdm_state=$11, cdm_postal_code=$12, cdm_country=$13, cdm_industry=$14, cdm_company_size=$15, cdm_revenue=$16, cdm_asset=$17, cdm_domain=$18, cdm_ip_address=$19, cdm_updated_at=now() where cdm_id=$20 RETURNING *',
+        params = [encryption.encrypt(contact.cdm_first_name),encryption.encrypt(contact.cdm_last_name),encryption.encrypt(contact.cdm_job_title),encryption.encrypt(contact.cjlm_job_level),encryption.encrypt(contact.cdm_department),encryption.encrypt(contact.cdm_email),encryption.encrypt(contact.cdm_contact_number),encryption.encrypt(contact.cdm_company_name),encryption.encrypt(contact.cdm_address),encryption.encrypt(contact.city_name),encryption.encrypt(contact.state_name),encryption.encrypt(contact.cdm_postal_code),encryption.encrypt(contact.c_search),encryption.encrypt(contact.cim_industries),encryption.encrypt(contact.cesm_employee_size),encryption.encrypt(contact.crem_revenue),encryption.encrypt(contact.cam_campaign_asset),encryption.encrypt(contact.cdm_domain),encryption.encrypt(contact.cdm_ip_address),id];
     client.query(singleInsert, params, function (error, result) {
         results.push(result.rows[0]); // Will contain your inserted rows
 
@@ -624,6 +701,168 @@ router.post('/delete/:jobId', oauth.authorise(), (req, res, next) => {
         return res.json(results);
     });
 
+    done(err);
+  });
+});
+
+
+router.post('/domain_limit/typeahead/search', oauth.authorise(), (req, res, next) => {
+
+  var email = req.body.cdm_email.toLowerCase();
+  var name = email.split('@');
+  var em = encryption.encrypt(name[1]);
+  console.log(name);
+  const results = [];
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    // SQL Query > Select Data
+    // const strqry =  "SELECT cm_id, cm_domain_limit "+
+    const strqry =  "SELECT cm_id, cm_domain_limit, count(cdm_domain) as domain "+
+                    "FROM contact_discovery_master con "+
+                    "inner join campaign_master cm on con.cdm_cm_id=cm.cm_id "+
+                    "where con.cdm_cm_id = $1 "+
+                    "and con.cdm_status = 0  "+
+                    "and LOWER(cdm_domain) LIKE LOWER($2) "+
+                    "group by cm_id, cm_domain_limit ";
+                    // "and LOWER(ccnm_last_name) LIKE LOWER($3) "
+
+    const query = client.query(strqry,[req.body.cdm_cm_id.cm_id,em]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+    done(err);
+  });
+});
+
+router.post('/domain_limit_edit/typeahead/search', oauth.authorise(), (req, res, next) => {
+
+  var email = req.body.cdm_email.toLowerCase();
+  var name = email.split('@');
+  var em = encryption.encrypt(name[1]);
+  console.log(name);
+  const results = [];
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    // SQL Query > Select Data
+    // const strqry =  "SELECT cm_id, cm_domain_limit "+
+    const strqry =  "SELECT cm_id, cm_domain_limit, count(cdm_domain) as domain "+
+                    "FROM contact_discovery_master con "+
+                    "inner join campaign_master cm on con.cdm_cm_id=cm.cm_id "+
+                    "where con.cdm_cm_id = $1 "+
+                    "and con.cdm_status = 0  "+
+                    "and LOWER(cdm_domain) LIKE LOWER($2) "+
+                    "group by cm_id, cm_domain_limit ";
+                    // "and LOWER(ccnm_last_name) LIKE LOWER($3) "
+
+    const query = client.query(strqry,[req.body.cm_id,em]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+    done(err);
+  });
+});
+
+router.post('/allow_domain_limit/typeahead/search', oauth.authorise(), (req, res, next) => {
+
+  var email = req.body.cdm_email.toLowerCase();
+  var name = email.split('@');
+  var em = encryption.encrypt(name[1]);
+  
+  const results = [];
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+    // SQL Query > Select Data
+    // const strqry =  "SELECT cm_id, cm_domain_limit "+
+    // const strqry =  "SELECT cm_id, cm_domain_limit, count(cdm_domain) as domain "+
+    //                 "FROM contact_discovery_master con "+
+    //                 "inner join campaign_master cm on con.cdm_cm_id=cm.cm_id "+
+    //                 "where con.cdm_cm_id = $1 "+
+    //                 "and LOWER(cdm_domain) LIKE LOWER($2) "+
+    //                 "group by cm_id, cm_domain_limit ";
+    //                 // "and LOWER(ccnm_last_name) LIKE LOWER($3) "
+
+    const strqry = "select cm_id, adcm_domain_limit, count(cdm_domain) as domain "+
+                    "from contact_discovery_master cdm "+ 
+                    "inner join campaign_master cm on cdm.cdm_cm_id = cm.cm_id "+ 
+                    "inner join allow_domain_campaign_master adcm on cm.cm_id = adcm.adcm_cm_id "+
+                    "where cdm.cdm_cm_id = $1  "+
+                    "and cdm.cdm_status = 0  "+
+                    "and LOWER(adcm_website) LIKE LOWER($2) "+
+                    "and LOWER(cdm_domain) LIKE LOWER($3) "+
+                    "group by cm_id, adcm_domain_limit ";
+
+    const query = client.query(strqry,[req.body.cdm_cm_id.cm_id,name[1],em]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
+    done(err);
+  });
+});
+
+router.post('/allow_domain_limit_edit/typeahead/search', oauth.authorise(), (req, res, next) => {
+
+  var email = req.body.cdm_email.toLowerCase();
+  var name = email.split('@');
+  var em = encryption.encrypt(name[1]);
+  console.log(em);
+  const results = [];
+  pool.connect(function(err, client, done){
+    if(err) {
+      done();
+      // pg.end();
+      console.log("the error is"+err);
+      return res.status(500).json({success: false, data: err});
+    }
+
+    const strqry = "select cm_id, adcm_domain_limit, count(cdm_domain) as domain "+
+                    "from contact_discovery_master cdm "+ 
+                    "inner join campaign_master cm on cdm.cdm_cm_id = cm.cm_id "+ 
+                    "inner join allow_domain_campaign_master adcm on cm.cm_id = adcm.adcm_cm_id "+
+                    "where cdm.cdm_cm_id = $1  "+
+                    "and cdm.cdm_status = 0  "+
+                    "and LOWER(adcm_website) LIKE LOWER($2) "+
+                    "and LOWER(cdm_domain) LIKE LOWER($3) "+
+                    "group by cm_id, adcm_domain_limit ";
+
+    const query = client.query(strqry,[req.body.cm_id,name[1],em]);
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    query.on('end', () => {
+      done();
+      // pg.end();
+      return res.json(results);
+    });
     done(err);
   });
 });
@@ -704,6 +943,7 @@ router.post('/contact/limit', oauth.authorise(), (req, res, next) => {
       row.cdm_revenue=encryption.decrypt(row.cdm_revenue);
       row.cdm_asset=encryption.decrypt(row.cdm_asset);
       row.cdm_domain=encryption.decrypt(row.cdm_domain);
+      row.cdm_ip_address=encryption.decrypt(row.cdm_ip_address);
       results.push(row);
     });
     query.on('end', () => {
@@ -790,7 +1030,7 @@ router.post('/assignCampaign/limit', oauth.authorise(), (req, res, next) => {
     const str = "%"+req.body.search+"%";
     // SQL Query > Select contact
 
-    const strqry =  "SELECT cdm_id,cdm_first_name,cdm_last_name,cdm_job_title,cdm_job_level,cdm_dept,cdm_email_id,cdm_company_name,cdm_address,cdm_city,cdm_state,cdm_postal_code,cdm_country,cdm_industry,cdm_revenue,cdm_asset,cdm_domain,cdm_company_size,cdm_mobile,call_status "+
+    const strqry =  "SELECT cdm_id,cdm_first_name,cdm_last_name,cdm_job_title,cdm_job_level,cdm_dept,cdm_email_id,cdm_company_name,cdm_address,cdm_city,cdm_state,cdm_postal_code,cdm_country,cdm_industry,cdm_revenue,cdm_asset,cdm_domain,cdm_company_size,cdm_mobile,cdm_ip_address,call_status "+
                     "FROM contact_discovery_master cdm "+
                     "where cdm.cdm_cm_id is null "+
                     "and cdm_status = 0 "+
@@ -817,6 +1057,8 @@ router.post('/assignCampaign/limit', oauth.authorise(), (req, res, next) => {
       row.cdm_revenue=encryption.decrypt(row.cdm_revenue);
       row.cdm_asset=encryption.decrypt(row.cdm_asset);
       row.cdm_domain=encryption.decrypt(row.cdm_domain);
+      row.cdm_ip_address=encryption.decrypt(row.cdm_ip_address);
+
       console.log(row);
       results.push(row);
     });
